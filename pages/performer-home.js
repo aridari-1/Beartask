@@ -11,14 +11,13 @@ export default function PerformerHome() {
   const [stats, setStats] = useState({ accepted: 0, ongoing: 0, completed: 0 });
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("ongoing");
+  const [selectedTask, setSelectedTask] = useState(null);
 
-  // 🧠 Load performer info
   useEffect(() => {
     const loadUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUser(user);
-
       const { data: profile } = await supabase
         .from("profiles")
         .select("username")
@@ -40,10 +39,7 @@ export default function PerformerHome() {
       .eq("accepted_by", uname)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error(error);
-      return;
-    }
+    if (error) return console.error(error);
 
     const accepted = data.length;
     const completed = data.filter((t) => t.status === "completed").length;
@@ -54,7 +50,6 @@ export default function PerformerHome() {
     setTasks(data);
   };
 
-  // 🟢 Mark task as started
   const startTask = async (taskId) => {
     const { error } = await supabase
       .from("tasks")
@@ -73,7 +68,6 @@ export default function PerformerHome() {
     }
   };
 
-  // 🟣 Mark task as completed
   const markCompleted = async (taskId) => {
     const { error } = await supabase
       .from("tasks")
@@ -100,8 +94,12 @@ export default function PerformerHome() {
       ? tasks.filter((t) => t.status === "in_progress")
       : tasks.filter((t) => t.status === "completed");
 
+  const toggleTask = (id) => {
+    setSelectedTask(selectedTask === id ? null : id);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center text-white text-center py-10">
+    <div className="min-h-screen flex flex-col items-center text-white text-center py-10 px-3">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -111,7 +109,7 @@ export default function PerformerHome() {
           Hey, {username || "Performer"} 👋
         </h1>
         <p className="text-white/80 mb-6">
-          Here’s your current campus activity. Keep helping others!
+          Here’s your current activity. Keep helping others!
         </p>
 
         {/* Task filters */}
@@ -149,15 +147,9 @@ export default function PerformerHome() {
           >
             🔍 Find Tasks
           </Link>
-          <Link
-            href="/profile"
-            className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg transition"
-          >
-            👤 My Profile
-          </Link>
         </div>
 
-        {/* Task display */}
+        {/* Task list */}
         <div className="text-left">
           <h2 className="text-xl font-semibold mb-3 capitalize">
             {filter === "accepted"
@@ -174,67 +166,71 @@ export default function PerformerHome() {
               {filteredTasks.map((t) => (
                 <div
                   key={t.id}
-                  className="bg-white/10 rounded-lg p-3 text-sm space-y-3"
+                  className={`bg-white/10 rounded-lg p-3 text-sm space-y-2 ${
+                    selectedTask === t.id ? "shadow-lg" : "hover:bg-white/20"
+                  }`}
                 >
-                  <div className="flex justify-between items-center">
-                    <div className="text-left">
-                      <p className="font-semibold">{t.title}</p>
-                      <p className="text-white/70">Posted by @{t.posted_by}</p>
+                  <button
+                    onClick={() => toggleTask(t.id)}
+                    className="w-full flex justify-between items-center font-semibold text-left"
+                  >
+                    <div>
+                      <p>{t.title}</p>
+                      <p className="text-white/70 text-xs">@{t.posted_by}</p>
                     </div>
                     <span
-                      className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-semibold ${
-                        t.status === "in_progress"
-                          ? "bg-blue-200 text-blue-700"
-                          : t.status === "accepted"
-                          ? "bg-yellow-200 text-yellow-700"
-                          : "bg-green-200 text-green-700"
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        t.status === "completed"
+                          ? "bg-green-500"
+                          : t.status === "in_progress"
+                          ? "bg-blue-500"
+                          : "bg-yellow-400 text-purple-900"
                       }`}
                     >
                       {t.status.replace("_", " ")}
                     </span>
-                  </div>
+                  </button>
 
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    {t.status === "accepted" && (
-                      <button
-                        onClick={() => startTask(t.id)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs"
-                      >
-                        🚀 Start
-                      </button>
-                    )}
+                  {selectedTask === t.id && (
+                    <div className="mt-2 text-sm text-white/90 space-y-2">
+                      <p><strong>Type:</strong> {t.task_type}</p>
+                      <p><strong>Description:</strong> {t.description}</p>
+                      <p><strong>Location:</strong> {t.location || "Not specified"}</p>
+                      <p><strong>Reward:</strong> ${t.reward}</p>
 
-                    {/* ✅ Button to mark completed */}
-                    {t.status === "in_progress" && !t.performer_confirmed && (
-                      <button
-                        onClick={() => markCompleted(t.id)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs"
-                      >
-                        ✅ Mark as Completed
-                      </button>
-                    )}
+                      <div className="flex gap-2 flex-wrap">
+                        {t.status === "accepted" && (
+                          <button
+                            onClick={() => startTask(t.id)}
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs"
+                          >
+                            🚀 Start
+                          </button>
+                        )}
+                        {t.status === "in_progress" && !t.performer_confirmed && (
+                          <button
+                            onClick={() => markCompleted(t.id)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs"
+                          >
+                            ✅ Mark Completed
+                          </button>
+                        )}
+                      </div>
 
-                    <Link
-                      href={`/task/${t.id}`}
-                      className="bg-purple-700 hover:bg-purple-800 text-white px-3 py-1 rounded-lg text-xs"
-                    >
-                      View Task
-                    </Link>
-                  </div>
-
-                  {(t.status === "accepted" || t.status === "in_progress") && (
-                    <MessageBox
-                      taskId={t.id}
-                      currentUser={username}
-                      otherUser={t.posted_by}
-                    />
-                  )}
-
-                  {t.status === "completed" && (
-                    <FeedbackForm
-                      taskId={t.id}
-                      toUserUsername={t.posted_by}
-                    />
+                      {(t.status === "accepted" || t.status === "in_progress") && (
+                        <MessageBox
+                          taskId={t.id}
+                          currentUser={username}
+                          otherUser={t.posted_by}
+                        />
+                      )}
+                      {t.status === "completed" && (
+                        <FeedbackForm
+                          taskId={t.id}
+                          toUserUsername={t.posted_by}
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
               ))}

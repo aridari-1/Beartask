@@ -11,8 +11,8 @@ export default function PosterHome() {
   const [stats, setStats] = useState({ total: 0, ongoing: 0, completed: 0 });
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("all");
+  const [selectedTask, setSelectedTask] = useState(null);
 
-  // 🧠 Load poster info
   useEffect(() => {
     const loadUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -28,7 +28,6 @@ export default function PosterHome() {
     loadUser();
   }, []);
 
-  // 🔁 Fetch tasks
   useEffect(() => {
     if (username) fetchTasks(username);
   }, [username]);
@@ -40,6 +39,7 @@ export default function PosterHome() {
       .eq("posted_by", uname)
       .order("created_at", { ascending: false });
     if (error) return console.error(error);
+
     const total = data.length;
     const completed = data.filter((t) => t.status === "completed").length;
     const ongoing = data.filter(
@@ -49,44 +49,16 @@ export default function PosterHome() {
     setTasks(data);
   };
 
-  // 🔔 NEW: Realtime subscription to listen for task status changes
-  useEffect(() => {
-    if (!username) return;
-
-    const channel = supabase
-      .channel("tasks-realtime-poster")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "tasks",
-          filter: `posted_by=eq.${username}`,
-        },
-        (payload) => {
-          setTasks((prev) =>
-            prev.map((task) =>
-              task.id === payload.new.id ? payload.new : task
-            )
-          );
-          fetchTasks(username); // refresh stats
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [username]);
-
   const filteredTasks =
     filter === "ongoing"
-      ? tasks.filter(
-          (t) => t.status === "accepted" || t.status === "in_progress"
-        )
+      ? tasks.filter((t) => t.status === "accepted" || t.status === "in_progress")
       : filter === "completed"
       ? tasks.filter((t) => t.status === "completed")
       : tasks;
+
+  const toggleTask = (id) => {
+    setSelectedTask(selectedTask === id ? null : id);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center text-white text-center py-10">
@@ -96,7 +68,7 @@ export default function PosterHome() {
         className="max-w-3xl w-full bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-lg"
       >
         <h1 className="text-3xl font-bold mb-2">
-          Welcome back, {username || "Poster"} 👋
+          Hey, {username || "Poster"} 👋
         </h1>
         <p className="text-white/80 mb-6">
           Track your posted tasks and stay connected with your campus helpers.
@@ -114,11 +86,7 @@ export default function PosterHome() {
                   : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
-              {f === "all"
-                ? "All"
-                : f === "ongoing"
-                ? "Ongoing"
-                : "Completed"}
+              {f === "all" ? "All" : f === "ongoing" ? "Ongoing" : "Completed"}
               <div className="text-2xl font-bold">
                 {f === "all"
                   ? stats.total
@@ -130,18 +98,12 @@ export default function PosterHome() {
           ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-4 mb-10">
+        <div className="flex justify-center mb-10">
           <Link
             href="/post"
             className="bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold px-6 py-3 rounded-lg transition"
           >
             📝 Create New Task
-          </Link>
-          <Link
-            href="/browse"
-            className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg transition"
-          >
-            🔍 Browse Performers
           </Link>
         </div>
 
@@ -162,12 +124,17 @@ export default function PosterHome() {
               {filteredTasks.map((t) => (
                 <div
                   key={t.id}
-                  className="bg-white/10 rounded-lg p-3 text-sm space-y-3"
+                  className={`bg-white/10 rounded-lg p-3 text-sm space-y-2 ${
+                    selectedTask === t.id ? "shadow-lg" : "hover:bg-white/20"
+                  }`}
                 >
-                  <div className="flex justify-between items-center">
-                    <div className="text-left">
-                      <p className="font-semibold">{t.title}</p>
-                      <p className="text-white/70">
+                  <button
+                    onClick={() => toggleTask(t.id)}
+                    className="w-full flex justify-between items-center font-semibold text-left"
+                  >
+                    <div>
+                      <p>{t.title}</p>
+                      <p className="text-white/70 text-xs">
                         {t.status === "open"
                           ? "Open"
                           : t.status === "accepted"
@@ -178,33 +145,40 @@ export default function PosterHome() {
                       </p>
                     </div>
                     <span
-                      className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                      className={`text-xs px-2 py-1 rounded-full ${
                         t.status === "open"
-                          ? "bg-green-100 text-green-700"
+                          ? "bg-green-500"
                           : t.status === "accepted"
-                          ? "bg-yellow-100 text-yellow-700"
+                          ? "bg-yellow-400 text-purple-900"
                           : t.status === "in_progress"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-200 text-gray-600"
+                          ? "bg-blue-500"
+                          : "bg-gray-400"
                       }`}
                     >
-                      {t.status}
+                      {t.status.replace("_", " ")}
                     </span>
-                  </div>
+                  </button>
 
-                  {(t.status === "accepted" || t.status === "in_progress") && (
-                    <MessageBox
-                      taskId={t.id}
-                      currentUser={username}
-                      otherUser={t.accepted_by}
-                    />
-                  )}
+                  {selectedTask === t.id && (
+                    <div className="mt-2 text-sm text-white/90 space-y-2">
+                      <p><strong>Description:</strong> {t.description}</p>
+                      <p><strong>Location:</strong> {t.location || "Not specified"}</p>
+                      <p><strong>Reward:</strong> ${t.reward}</p>
 
-                  {t.status === "completed" && (
-                    <FeedbackForm
-                      taskId={t.id}
-                      toUserUsername={t.accepted_by}
-                    />
+                      {(t.status === "accepted" || t.status === "in_progress") && (
+                        <MessageBox
+                          taskId={t.id}
+                          currentUser={username}
+                          otherUser={t.accepted_by}
+                        />
+                      )}
+                      {t.status === "completed" && (
+                        <FeedbackForm
+                          taskId={t.id}
+                          toUserUsername={t.accepted_by}
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
               ))}

@@ -7,10 +7,10 @@ export default function Footer() {
         </p>
         <p className="mt-2">
           <a
-            href="mailto:support@beartask.app"
+            
             className="text-amber-300 hover:underline"
           >
-            support@beartask.app
+            
           </a>
         </p>
       </div>

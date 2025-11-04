@@ -10,7 +10,9 @@ export default function BrowseTasks() {
 
   useEffect(() => {
     const fetchUserAndTasks = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
@@ -42,7 +44,7 @@ export default function BrowseTasks() {
       return;
     }
 
-    // 🚫 Check if performer has unconfirmed completed tasks
+    // 🚫 Check if performer has unconfirmed in-progress tasks
     const { data: pendingTasks, error: pendingError } = await supabase
       .from("tasks")
       .select("id, title")
@@ -63,6 +65,46 @@ export default function BrowseTasks() {
       );
       setLoading(false);
       return;
+    }
+
+    // 🔒 NEW: Check if performer has completed tasks that are not yet rated
+    const { data: completedTasks, error: completedError } = await supabase
+      .from("tasks")
+      .select("id, title")
+      .eq("accepted_by", userInfo.username)
+      .eq("status", "completed");
+
+    if (completedError) {
+      console.error("Error checking completed tasks:", completedError);
+      alert("Error verifying completed tasks. Please try again.");
+      return;
+    }
+
+    if (completedTasks.length > 0) {
+      const completedIds = completedTasks.map((t) => t.id);
+      const { data: feedbacks, error: feedbackError } = await supabase
+        .from("feedback")
+        .select("task_id")
+        .in("task_id", completedIds)
+        .eq("from_user_username", userInfo.username);
+
+      if (feedbackError) {
+        console.error("Feedback check error:", feedbackError);
+        alert("Error verifying your feedback records.");
+        return;
+      }
+
+      const ratedIds = feedbacks?.map((f) => f.task_id) || [];
+      const unrated = completedTasks.filter(
+        (t) => !ratedIds.includes(t.id)
+      );
+
+      if (unrated.length > 0) {
+        alert(
+          `⚠️ You must rate your last completed task ("${unrated[0].title}") before accepting new ones.`
+        );
+        return;
+      }
     }
 
     // ✅ Continue if performer is allowed to accept

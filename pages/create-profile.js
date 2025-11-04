@@ -54,7 +54,8 @@ export default function CreateProfile() {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push("/role-select");
+        // ✅ Redirect new users to the onboarding tutorial page
+        router.push("/how-to-use");
       }, 1500);
     } catch (err) {
       console.error(err);

@@ -81,8 +81,7 @@ export default function MyApp({ Component, pageProps }) {
 
       const timer = setTimeout(() => {
         setShowSplash(false);
-      }, 2000); // ✅ stays 2 seconds
-
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [session]);
@@ -99,15 +98,17 @@ export default function MyApp({ Component, pageProps }) {
   // 🔒 Hide content until logged in (except login page)
   if (!session && !isLoginPage) return null;
 
-  // 🌈 Global layout wrapper
+  // 🌈 Global layout wrapper (mobile-friendly)
   return (
     <>
       <Head>
         <title>BearTask</title>
         <meta
           name="description"
-          content="A student-to-student campus task marketplace for Conway, AR."
+          content="A student-to-student campus task marketplace."
         />
+        {/* ✅ Ensures proper scaling on mobile */}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -115,9 +116,13 @@ export default function MyApp({ Component, pageProps }) {
         <Component {...pageProps} />
       ) : (
         <>
-          <AnimatePresence>{showSplash && <SplashScreen visible />}</AnimatePresence>
+          <AnimatePresence>
+            {showSplash && <SplashScreen visible />}
+          </AnimatePresence>
           <Layout>
-            <Component {...pageProps} />
+            <div className="min-h-screen w-full flex flex-col items-center justify-start px-3 sm:px-4 md:px-8">
+              <Component {...pageProps} />
+            </div>
           </Layout>
         </>
       )}

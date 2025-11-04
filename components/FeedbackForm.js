@@ -7,7 +7,6 @@ export default function FeedbackForm({ taskId, toUserUsername, taskTitle, feedba
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showReport, setShowReport] = useState(false);
-  const [reportType, setReportType] = useState("");
   const [reportComment, setReportComment] = useState("");
   const [reportSent, setReportSent] = useState(false);
 
@@ -30,7 +29,7 @@ export default function FeedbackForm({ taskId, toUserUsername, taskTitle, feedba
     const fromUsername = profile?.username || user.email.split("@")[0];
 
     try {
-      // 🔍 Check if this user already left feedback for this task
+      // check if already left feedback
       const { data: existing } = await supabase
         .from("feedback")
         .select("id")
@@ -42,7 +41,7 @@ export default function FeedbackForm({ taskId, toUserUsername, taskTitle, feedba
         return;
       }
 
-      // 🧾 Insert feedback
+      // insert feedback
       const { error: insertError } = await supabase.from("feedback").insert([
         {
           task_id: taskId,
@@ -57,7 +56,7 @@ export default function FeedbackForm({ taskId, toUserUsername, taskTitle, feedba
       ]);
       if (insertError) throw insertError;
 
-      // ⭐ Update avg_rating in profiles
+      // update avg_rating
       const { data: avg } = await supabase
         .from("feedback")
         .select("rating")
@@ -81,11 +80,10 @@ export default function FeedbackForm({ taskId, toUserUsername, taskTitle, feedba
     }
   };
 
-  // 🧱 Report issue submission
   const handleReport = async (e) => {
     e.preventDefault();
-    if (!reportType) {
-      setErrorMsg("Please select a report reason.");
+    if (!reportComment.trim()) {
+      setErrorMsg("Please describe the issue before submitting.");
       return;
     }
 
@@ -104,12 +102,11 @@ export default function FeedbackForm({ taskId, toUserUsername, taskTitle, feedba
           task_id: taskId,
           reported_user: toUserUsername,
           reported_by: fromUsername,
-          issue_type: reportType,
+          issue_type: "General report",
           description: reportComment,
           created_at: new Date(),
         },
       ]);
-
       if (error) throw error;
 
       setReportSent(true);
@@ -137,27 +134,17 @@ export default function FeedbackForm({ taskId, toUserUsername, taskTitle, feedba
 
         {showReport && (
           <form onSubmit={handleReport} className="mt-3 space-y-3 text-left">
-            <label className="block text-sm">Select issue type:</label>
-            <select
-              value={reportType}
-              onChange={(e) => setReportType(e.target.value)}
-              className="w-full bg-white/20 border border-white/30 rounded-lg p-2 text-white text-sm focus:ring-2 focus:ring-red-400 outline-none"
-            >
-              <option value="">-- Choose a reason --</option>
-              <option value="No show">No show</option>
-              <option value="Poor communication">Poor communication</option>
-              <option value="Incomplete work">Incomplete work</option>
-              <option value="Other">Other</option>
-            </select>
-
             <textarea
-              rows="2"
-              placeholder="Describe the issue (optional)"
+              rows="3"
+              placeholder="Describe the issue..."
               value={reportComment}
               onChange={(e) => setReportComment(e.target.value)}
               className="w-full bg-white/20 border border-white/30 rounded-lg p-2 text-white text-sm focus:ring-2 focus:ring-red-400 outline-none"
+              required
             />
-
+            {errorMsg && (
+              <p className="text-red-400 text-xs text-center">{errorMsg}</p>
+            )}
             <button
               type="submit"
               className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition"
