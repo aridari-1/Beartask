@@ -27,10 +27,10 @@ export default function RoleSelect() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      // Check if profile exists first
+      // 🧠 Check if profile exists first
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id")
+        .select("id, role")
         .eq("id", user.id)
         .single();
 
@@ -46,7 +46,7 @@ export default function RoleSelect() {
         return;
       }
 
-      // Update role in profile
+      // ✅ Update role in profile if missing or changed
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ role: selectedRole })
@@ -58,10 +58,20 @@ export default function RoleSelect() {
         return;
       }
 
-      // Redirect to correct dashboard
-      router.push(selectedRole === "poster" ? "/poster-home" : "/performer-home");
+      // 🌟 Verify the update worked
+      const { data: verify } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      console.log("Updated role:", verify?.role || selectedRole);
+
+      // 🚀 Redirect to correct dashboard
+      if (selectedRole === "poster") router.push("/poster-home");
+      else router.push("/performer-home");
     } catch (err) {
-      console.error(err);
+      console.error("Role update error:", err);
       alert("Something went wrong.");
     }
   };

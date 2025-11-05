@@ -72,6 +72,35 @@ export default function MyApp({ Component, pageProps }) {
     redirectByRole();
   }, [session, router]);
 
+  // ✅ NEW: Auto-check for users without a role
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (!session || router.pathname === "/login" || router.pathname === "/create-profile" || router.pathname === "/role-select") return;
+
+      try {
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+
+        if (error) {
+          console.error("Error verifying user role:", error);
+          return;
+        }
+
+        if (!profile?.role) {
+          console.warn("User missing role, redirecting to role-select...");
+          router.push("/role-select");
+        }
+      } catch (err) {
+        console.error("Error checking user role:", err);
+      }
+    };
+
+    checkUserRole();
+  }, [session, router]);
+
   // 🎬 Show splash screen once per login
   useEffect(() => {
     const alreadyShown = localStorage.getItem("beartask_splash_shown");
