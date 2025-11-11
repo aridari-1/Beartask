@@ -49,20 +49,6 @@ export default function Profile() {
     loadUser();
   }, []);
 
-  const handleSwitchRole = async () => {
-    if (!user) return;
-    const newRole = role === "poster" ? "performer" : "poster";
-    const { error } = await supabase
-      .from("profiles")
-      .update({ role: newRole })
-      .eq("id", user.id);
-    if (!error) {
-      setRole(newRole);
-      window.location.href =
-        newRole === "poster" ? "/poster-home" : "/performer-home";
-    }
-  };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
@@ -154,13 +140,6 @@ export default function Profile() {
                 className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 rounded-lg transition"
               >
                 ✏️ Edit Info
-              </button>
-
-              <button
-                onClick={handleSwitchRole}
-                className="bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold py-2 rounded-lg transition"
-              >
-                🔄 Switch to {role === "poster" ? "Performer" : "Poster"} Mode
               </button>
 
               <button

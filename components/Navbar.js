@@ -50,6 +50,14 @@ export default function Navbar() {
       ? performerLinks
       : defaultLinks;
 
+  // ✅ New: Determine where logo should go based on role
+  const logoLink =
+    role === "poster"
+      ? "/poster-home"
+      : role === "performer"
+      ? "/performer-home"
+      : "/role-select";
+
   return (
     <motion.nav
       className="bg-white/10 backdrop-blur-md border-b border-white/20 text-white sticky top-0 z-50"
@@ -59,7 +67,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto flex justify-between items-center px-4 py-3">
         {/* Logo */}
         <Link
-          href="/"
+          href={logoLink} // ✅ Updated link destination
           className="flex items-center gap-2 font-bold text-xl tracking-wide"
         >
           <img src="/logo.png" alt="BearTask logo" className="h-8 w-8" />

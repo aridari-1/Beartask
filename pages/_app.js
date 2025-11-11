@@ -14,7 +14,6 @@ export default function MyApp({ Component, pageProps }) {
   const router = useRouter();
   const isLoginPage = router.pathname === "/login";
 
-  // 🧠 Fetch current session & listen for changes
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -25,57 +24,76 @@ export default function MyApp({ Component, pageProps }) {
       (_event, session) => {
         setSession(session);
         validateEmail(session);
-        if (!session && router.pathname !== "/login") router.push("/login");
+        if (
+          !session &&
+          !["/login", "/", "/role-select", "/how-to-use", "/create-profile"].includes(
+            router.pathname
+          )
+        )
+          router.push("/login");
       }
     );
 
     return () => listener.subscription.unsubscribe();
   }, [router]);
 
-  // ✅ Validate allowed student email domains
+  // ✅ Validate allowed student email domains — only for performers
   const validateEmail = async (session) => {
     if (!session) return;
     const email = session.user?.email?.toLowerCase() || "";
     const allowedDomains = ["cub.uca.edu", "hendrix.edu"];
     const domain = email.split("@")[1];
     const isValid = allowedDomains.includes(domain);
-
     setValidEmail(isValid);
 
-    // 🚨 Auto sign out if invalid email detected
-    if (!isValid) {
+    const role = localStorage.getItem("beartask_role");
+
+    // 🚨 Auto sign out only if invalid performer
+    if (role === "performer" && !isValid) {
       await supabase.auth.signOut();
       localStorage.removeItem("beartask_splash_shown");
       router.push("/login");
     }
   };
 
-  // 🚀 Redirect root users to correct dashboard
+  // 🔀 Redirect logged-in users away from "/" ONLY after they’ve completed the tutorial
   useEffect(() => {
     const redirectByRole = async () => {
-      if (session && router.pathname === "/") {
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
+      if (!session || router.pathname !== "/") return;
 
-        if (error) {
-          console.error("Error checking role:", error);
-          return;
-        }
+      const hasSeenTutorial =
+        typeof window !== "undefined" &&
+        localStorage.getItem("beartask_tutorial_done") === "true";
 
-        if (profile?.role === "poster") router.push("/poster-home");
-        else if (profile?.role === "performer") router.push("/performer-home");
+      // ⛔ Do not redirect from "/" until the tutorial is completed
+      if (!hasSeenTutorial) return;
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Error checking role:", error);
+        return;
       }
+
+      if (profile?.role === "poster") router.push("/poster-home");
+      else if (profile?.role === "performer") router.push("/performer-home");
     };
     redirectByRole();
   }, [session, router]);
 
-  // ✅ NEW: Auto-check for users without a role
   useEffect(() => {
     const checkUserRole = async () => {
-      if (!session || router.pathname === "/login" || router.pathname === "/create-profile" || router.pathname === "/role-select") return;
+      if (
+        !session ||
+        ["/login", "/create-profile", "/role-select", "/how-to-use"].includes(
+          router.pathname
+        )
+      )
+        return;
 
       try {
         const { data: profile, error } = await supabase
@@ -101,7 +119,6 @@ export default function MyApp({ Component, pageProps }) {
     checkUserRole();
   }, [session, router]);
 
-  // 🎬 Show splash screen once per login
   useEffect(() => {
     const alreadyShown = localStorage.getItem("beartask_splash_shown");
     if (!alreadyShown && session) {
@@ -115,19 +132,9 @@ export default function MyApp({ Component, pageProps }) {
     }
   }, [session]);
 
-  // 🕓 Loading screen while session loads
-  if (session === undefined) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600">
-        Loading...
-      </div>
-    );
-  }
+  const publicRoutes = ["/", "/login", "/role-select", "/how-to-use", "/create-profile"];
+  if (!session && !publicRoutes.includes(router.pathname)) return null;
 
-  // 🔒 Hide content until logged in (except login page)
-  if (!session && !isLoginPage) return null;
-
-  // 🌈 Global layout wrapper (mobile-friendly)
   return (
     <>
       <Head>
@@ -136,7 +143,6 @@ export default function MyApp({ Component, pageProps }) {
           name="description"
           content="A student-to-student campus task marketplace."
         />
-        {/* ✅ Ensures proper scaling on mobile */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -145,9 +151,7 @@ export default function MyApp({ Component, pageProps }) {
         <Component {...pageProps} />
       ) : (
         <>
-          <AnimatePresence>
-            {showSplash && <SplashScreen visible />}
-          </AnimatePresence>
+          <AnimatePresence>{showSplash && <SplashScreen visible />}</AnimatePresence>
           <Layout>
             <div className="min-h-screen w-full flex flex-col items-center justify-start px-3 sm:px-4 md:px-8">
               <Component {...pageProps} />

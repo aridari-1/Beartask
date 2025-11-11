@@ -38,13 +38,37 @@ export default function BrowseTasks() {
     fetchUserAndTasks();
   }, []);
 
+  // 🔔 NEW: realtime subscription for newly posted tasks (no other logic changed)
+  useEffect(() => {
+    // Ensure the table is in the Realtime publication on the DB (see instructions below)
+    const channel = supabase
+      .channel("tasks-updates")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "tasks" },
+        (payload) => {
+          const newTask = payload.new;
+          // avoid duplicates if list already includes it
+          setTasks((prev) => {
+            if (prev.some((t) => t.id === newTask.id)) return prev;
+            // keep your newest-first order
+            return [newTask, ...prev];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const handleAcceptTask = async (taskId) => {
     if (!userInfo) {
       alert("Please log in before accepting a task.");
       return;
     }
 
-    // 🚫 Check if performer has unconfirmed in-progress tasks
     const { data: pendingTasks, error: pendingError } = await supabase
       .from("tasks")
       .select("id, title")
@@ -67,7 +91,6 @@ export default function BrowseTasks() {
       return;
     }
 
-    // 🔒 NEW: Check if performer has completed tasks that are not yet rated
     const { data: completedTasks, error: completedError } = await supabase
       .from("tasks")
       .select("id, title")
@@ -95,9 +118,7 @@ export default function BrowseTasks() {
       }
 
       const ratedIds = feedbacks?.map((f) => f.task_id) || [];
-      const unrated = completedTasks.filter(
-        (t) => !ratedIds.includes(t.id)
-      );
+      const unrated = completedTasks.filter((t) => !ratedIds.includes(t.id));
 
       if (unrated.length > 0) {
         alert(
@@ -107,7 +128,6 @@ export default function BrowseTasks() {
       }
     }
 
-    // ✅ Continue if performer is allowed to accept
     const { error } = await supabase
       .from("tasks")
       .update({
@@ -122,8 +142,6 @@ export default function BrowseTasks() {
       alert("Error: " + (error.message || "Check console for details."));
     } else {
       alert("✅ Task accepted! Check your performer dashboard.");
-
-      // 🔄 Refresh from DB to stay synced
       const { data: updatedTasks } = await supabase
         .from("tasks")
         .select("*")
@@ -131,6 +149,14 @@ export default function BrowseTasks() {
         .order("created_at", { ascending: false });
       setTasks(updatedTasks || []);
     }
+  };
+
+  // ✅ Your grouping logic remains unchanged
+  const grouped = {
+    "Home & Everyday Help": tasks.filter(
+      (t) => t.category === "Home & Everyday Help"
+    ),
+    "Campus Life": tasks.filter((t) => t.category === "Campus Life"),
   };
 
   if (loading)
@@ -156,54 +182,69 @@ export default function BrowseTasks() {
             No tasks available right now.
           </p>
         ) : (
-          <div className="space-y-4">
-            {tasks.map((t) => (
-              <div
-                key={t.id}
-                className="bg-white/10 backdrop-blur-md rounded-xl p-4 shadow-md"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-lg font-semibold">{t.title}</h2>
-                  <span className="text-sm text-white/70">
-                    Posted by{" "}
-                    <span className="text-amber-300 font-semibold">
-                      @{t.posted_by}
-                    </span>
-                  </span>
-                </div>
-
-                <p className="text-white/90 mb-2">{t.description}</p>
-                <p className="text-sm text-white/70">
-                  Category: {t.category} | Reward: ${t.reward}
-                </p>
-
-                <div className="flex justify-between items-center mt-3">
-                  <p className="text-sm text-white/70">
-                    {t.location} • {t.task_date}
+          <>
+            {Object.keys(grouped).map((cat) => (
+              <div key={cat} className="mb-10">
+                <h2 className="text-2xl font-semibold mb-4 text-amber-300">
+                  {cat}
+                </h2>
+                {grouped[cat].length === 0 ? (
+                  <p className="text-white/60 text-sm mb-4">
+                    No {cat.toLowerCase()} tasks right now.
                   </p>
-
-                  {t.status === "open" ? (
-                    userInfo?.username === t.posted_by ? (
-                      <span className="text-xs text-white/50 italic">
-                        (Your task)
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => handleAcceptTask(t.id)}
-                        className="bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold px-3 py-1 rounded-lg text-sm transition"
+                ) : (
+                  <div className="space-y-4">
+                    {grouped[cat].map((t) => (
+                      <div
+                        key={t.id}
+                        className="bg-white/10 backdrop-blur-md rounded-xl p-4 shadow-md"
                       >
-                        Accept Task →
-                      </button>
-                    )
-                  ) : (
-                    <span className="text-sm text-green-300">
-                      Accepted by @{t.accepted_by}
-                    </span>
-                  )}
-                </div>
+                        <div className="flex justify-between items-center mb-2">
+                          <h2 className="text-lg font-semibold">{t.title}</h2>
+                          <span className="text-sm text-white/70">
+                            Posted by{" "}
+                            <span className="text-amber-300 font-semibold">
+                              @{t.posted_by}
+                            </span>
+                          </span>
+                        </div>
+
+                        <p className="text-white/90 mb-2">{t.description}</p>
+                        <p className="text-sm text-white/70">
+                          Task Type: {t.task_type} | Reward: ${t.reward}
+                        </p>
+
+                        <div className="flex justify-between items-center mt-3">
+                          <p className="text-sm text-white/70">
+                            {t.location} • {t.task_date}
+                          </p>
+
+                          {t.status === "open" ? (
+                            userInfo?.username === t.posted_by ? (
+                              <span className="text-xs text-white/50 italic">
+                                (Your task)
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleAcceptTask(t.id)}
+                                className="bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold px-3 py-1 rounded-lg text-sm transition"
+                              >
+                                Accept Task →
+                              </button>
+                            )
+                          ) : (
+                            <span className="text-sm text-green-300">
+                              Accepted by @{t.accepted_by}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
-          </div>
+          </>
         )}
       </motion.div>
     </div>

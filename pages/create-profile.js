@@ -31,21 +31,23 @@ export default function CreateProfile() {
     const { data: { user } } = await supabase.auth.getUser();
     const email = user.email;
 
-    // detect school automatically from email domain
     const detectedSchool = email.includes("@cub.uca.edu")
       ? "University of Central Arkansas"
       : email.includes("@hendrix.edu")
       ? "Hendrix College"
       : "Unknown";
 
+    // ✅ Get role from localStorage
+    const role = localStorage.getItem("beartask_role");
+
     try {
       const { error } = await supabase.from("profiles").insert([
         {
           id: user.id,
           username: username.trim(),
-          email: email, // ✅ added email field
+          email: email,
           school: school || detectedSchool,
-          role: null,
+          role: role || null,
           created_at: new Date(),
         },
       ]);
@@ -54,7 +56,6 @@ export default function CreateProfile() {
 
       setSuccess(true);
       setTimeout(() => {
-        // ✅ Redirect new users to the onboarding tutorial page
         router.push("/how-to-use");
       }, 1500);
     } catch (err) {

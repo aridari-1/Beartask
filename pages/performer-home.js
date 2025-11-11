@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { useSupabaseClient, useSession } from "@supabase/auth-helpers-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import FeedbackForm from "../components/FeedbackForm";
 import MessageBox from "../components/MessageBox";
 
 export default function PerformerHome() {
-  const [user, setUser] = useState(null);
+  const supabase = useSupabaseClient();
+  const session = useSession();
   const [username, setUsername] = useState("");
   const [stats, setStats] = useState({ accepted: 0, ongoing: 0, completed: 0 });
   const [tasks, setTasks] = useState([]);
@@ -15,18 +16,16 @@ export default function PerformerHome() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUser(user);
+      if (!session?.user?.id) return;
       const { data: profile } = await supabase
         .from("profiles")
         .select("username")
-        .eq("id", user.id)
+        .eq("id", session.user.id)
         .single();
-      setUsername(profile?.username || user.email.split("@")[0]);
+      setUsername(profile?.username || session.user.email.split("@")[0]);
     };
     loadUser();
-  }, []);
+  }, [session, supabase]);
 
   useEffect(() => {
     if (username) fetchTasks(username);
@@ -112,7 +111,6 @@ export default function PerformerHome() {
           Here’s your current activity. Keep helping others!
         </p>
 
-        {/* Task filters */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {["accepted", "ongoing", "completed"].map((f) => (
             <button
@@ -149,7 +147,6 @@ export default function PerformerHome() {
           </Link>
         </div>
 
-        {/* Task list */}
         <div className="text-left">
           <h2 className="text-xl font-semibold mb-3 capitalize">
             {filter === "accepted"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { motion } from "framer-motion";
 
@@ -12,11 +12,21 @@ export default function Login() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    const storedRole = localStorage.getItem("beartask_role");
+    setRole(storedRole || "");
+    if (storedRole === "poster") {
+      setStep(2); // Skip school selection for posters
+      setSchool("General");
+    }
+  }, []);
+
   // 🏫 Allowed school and testing domains
   const allowedDomains = {
     "University of Central Arkansas": "@cub.uca.edu",
     "Hendrix College": "@hendrix.edu",
-    
   };
 
   // 🔹 Step 1: Send verification code
@@ -29,8 +39,7 @@ export default function Login() {
     const normalizedEmail = email.toLowerCase().trim();
     const requiredDomain = allowedDomains[school];
 
-    // ✅ Domain validation
-    if (requiredDomain !== "@") {
+    if (role === "performer") {
       if (!normalizedEmail.endsWith(requiredDomain)) {
         setError(
           `❌ Please use your valid ${school} email (must end with ${requiredDomain})`
@@ -41,12 +50,11 @@ export default function Login() {
     }
 
     try {
-      // ✅ Send a 6-digit code (not a magic link)
       const { error } = await supabase.auth.signInWithOtp({
         email: normalizedEmail,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: undefined, // ensures OTP instead of magic link
+          emailRedirectTo: undefined,
         },
       });
 
@@ -83,7 +91,6 @@ export default function Login() {
 
       const user = data.user;
 
-      // 🔍 Check if profile exists
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id")
@@ -125,11 +132,11 @@ export default function Login() {
           Welcome to BearTask 🐻
         </h1>
         <p className="text-white/80 mb-6 text-center">
-          Log in with your verified school email to continue.
+          Log in with your {role === "poster" ? "email" : "verified school email"} to continue.
         </p>
 
         {/* Step 1: Choose School */}
-        {step === 1 && (
+        {step === 1 && role === "performer" && (
           <div className="space-y-4">
             <p className="text-center mb-2 font-semibold">Select Your School:</p>
             {Object.keys(allowedDomains).map((schoolName) => (
@@ -152,14 +159,14 @@ export default function Login() {
           <form onSubmit={sendCode} className="space-y-4">
             <div>
               <label className="block text-sm mb-1">
-                {school} Email Address
+                {role === "performer" ? `${school} Email Address` : "Your Email"}
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-white/20 border border-white/30 rounded-lg p-2 text-white focus:ring-2 focus:ring-amber-400 outline-none"
-                placeholder={`you${allowedDomains[school]}`}
+                placeholder={role === "performer" ? `you${allowedDomains[school]}` : "you@email.com"}
               />
             </div>
 
@@ -174,13 +181,15 @@ export default function Login() {
               {loading ? "Sending..." : "Send Verification Code"}
             </button>
 
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="w-full text-white/80 underline text-sm mt-2"
-            >
-              ← Back to school selection
-            </button>
+            {role === "performer" && (
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="w-full text-white/80 underline text-sm mt-2"
+              >
+                ← Back to school selection
+              </button>
+            )}
           </form>
         )}
 
@@ -188,9 +197,7 @@ export default function Login() {
         {step === 2 && showVerifyCode && (
           <form onSubmit={verifyCodeNow} className="space-y-4">
             <div>
-              <label className="block text-sm mb-1">
-                Enter Verification Code
-              </label>
+              <label className="block text-sm mb-1">Enter Verification Code</label>
               <input
                 type="text"
                 value={verifyCode}

@@ -29,26 +29,18 @@ export default function PostTask() {
     fetchUser();
   }, [router]);
 
+  // ✅ Updated task categories
   const taskOptions = {
-    "Academic Support": [
-      "Note swap",
-      "Help with assignments",
-      "Help with project",
-      "Help with exams",
-      "Help with labs",
-      "Custom",
-    ],
-    "Quick Favors": [
-      "Printing help",
-      "Cafeteria swipe",
-      "Item return to the library",
+    "Home & Everyday Help": [
+      "Cleaning",
+      "Pet and Plant Care",
+      "Baby Sitting",
+      "Move Furniture",
       "Custom",
     ],
     "Campus Life": [
-      "Move in/out",
-      "Decor help",
-      "Graduation pics",
-      "Tech help",
+      "Academic Help",
+      "Quick Favors",
       "Custom",
     ],
   };
@@ -115,7 +107,7 @@ export default function PostTask() {
             </p>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {Object.keys(taskOptions).map((cat) => (
                   <button
                     key={cat}

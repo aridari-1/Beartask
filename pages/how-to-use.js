@@ -1,49 +1,45 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabaseClient";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 
 export default function HowToUse() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [userRole, setUserRole] = useState("");
+  const [userRole, setUserRole] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // 🧠 Tutorial slides
   const slides = [
     {
       title: "Welcome to BearTask 🐻",
-      text: "BearTask connects college students to help each other with everyday tasks.",
-      icon: "🎓",
+      text: "BearTask connects students with people who need help around campus or town.",
+      icon: "🤝",
     },
     {
-      title: "Post or Accept Tasks ✍️",
-      text: "Posters describe what they need help with. Performers browse available tasks and choose the ones they can complete.",
-      icon: "🧾",
+      title: "How It Works 🔁",
+      text: "Anyone (like you!) can request a service. Verified college students complete those tasks for money.",
+      icon: "💼",
     },
     {
-      title: "Meet, Complete & Rate 🤝",
-      text: "After the task is done, the performer marks it as completed. Both sides should leave ratings to build their campus reputation. Performers must rate the poster after completing each task, otherwise they won’t be able to accept another task",
+      title: "Direct Payment 💵",
+      text: "All payments are made directly between poster and performer. BearTask does not handle transactions inside the app.",
+      icon: "💬",
+    },
+    {
+      title: "For Students 🎓",
+      text: "If you're a student performer, you must rate the poster after each task — or you won’t be able to accept new tasks.",
       icon: "⭐",
-    },
-    {
-      title: "Important Guidelines ⚠️",
-      text: "All payments and exchanges are handled by hand, outside of BearTask; the app does not process any money.",
-      icon: "💵",
     },
   ];
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         router.push("/login");
-        return;
-      }
-
-      // ✅ Skip tutorial if already seen
-      if (localStorage.getItem("beartask_tutorial_done")) {
-        redirectByRole();
         return;
       }
 
@@ -53,28 +49,39 @@ export default function HowToUse() {
         .eq("id", user.id)
         .single();
 
-      if (profile?.role) setUserRole(profile.role);
+      const role = profile?.role || null;
+      setUserRole(role);
+
+      const seen = localStorage.getItem("beartask_tutorial_done");
+      if (seen && role) {
+        redirectByRole(role);
+        return;
+      }
+
+      setLoading(false);
     };
 
     init();
   }, [router]);
 
-  const redirectByRole = () => {
-    if (userRole === "poster") router.push("/poster-home");
-    else if (userRole === "performer") router.push("/performer-home");
+  const redirectByRole = (role) => {
+    if (role === "poster") router.push("/poster-home");
+    else if (role === "performer") router.push("/performer-home");
     else router.push("/role-select");
   };
 
   const handleFinish = () => {
     localStorage.setItem("beartask_tutorial_done", "true");
-    redirectByRole();
+    redirectByRole(userRole);
   };
 
   const next = () => setStep((prev) => Math.min(prev + 1, slides.length - 1));
   const back = () => setStep((prev) => Math.max(prev - 1, 0));
 
+  if (loading) return null;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-600 flex flex-col items-center justify-center text-white px-6 py-10 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex flex-col items-center justify-center text-white px-6 py-10 relative overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
@@ -90,7 +97,6 @@ export default function HowToUse() {
             {slides[step].text}
           </p>
 
-          {/* Navigation */}
           <div className="flex justify-between items-center mt-6">
             {step > 0 ? (
               <button
@@ -120,7 +126,6 @@ export default function HowToUse() {
             )}
           </div>
 
-          {/* Progress dots */}
           <div className="flex justify-center mt-5 space-x-2">
             {slides.map((_, i) => (
               <div
