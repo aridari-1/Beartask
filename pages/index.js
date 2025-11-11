@@ -25,15 +25,9 @@ export default function Home() {
       </motion.div>
 
       <p className="text-lg mb-4 max-w-xl">
-        <strong>BearTask</strong> is a local help platform that connects people
+         connecting people
         who need assistance with verified college students ready to lend a
-        hand. From errands and cleaning to tutoring and tech support, BearTask
-        makes getting help easy and reliable.
-      </p>
-
-      <p className="text-sm mb-10 max-w-md text-white/80">
-        Whether you need a quick favor or want to earn extra money helping your
-        community, BearTask is here for that.
+        hand.
       </p>
 
       <a
