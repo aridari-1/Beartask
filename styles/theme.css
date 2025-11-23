@@ -1,6 +1,10 @@
 :root {
-  --color-primary: #6D28D9;
-  --color-secondary: #4338CA;
-  --color-accent: #F59E0B;
-  --color-bg: #F3F4F6;
+  /* 🎨 BearTask New Brand Colors */
+  --color-primary: #0B1224;        /* Deep navy start */
+  --color-secondary: #3A0CA3;      /* Electric purple end */
+  --color-accent: #3B82F6;         /* Bright blue for buttons */
+  --color-highlight: #FBBF24;      /* Amber highlight */
+  --color-bg: linear-gradient(to bottom right, #0B1224, #3A0CA3);
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #E5E7EB;
 }

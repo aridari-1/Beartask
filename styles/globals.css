@@ -4,6 +4,85 @@
   --background: #ffffff;
   --foreground: #171717;
 }
+@import "tailwindcss";
+
+:root {
+  /* 🌈 BearTask Gradient & Text Colors */
+  --background-start: #0B1224;
+  --background-end: #3A0CA3;
+  --foreground: #FFFFFF;
+  --text-secondary: #E5E7EB;
+  --accent-blue-start: #3B82F6;
+  --accent-blue-end: #6366F1;
+  --highlight-amber: #FBBF24;
+}
+
+@theme inline {
+  --color-background: linear-gradient(to bottom right, var(--background-start), var(--background-end));
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-start: #0B1224;
+    --background-end: #3A0CA3;
+    --foreground: #FFFFFF;
+  }
+}
+
+body {
+  background: linear-gradient(to bottom right, var(--background-start), var(--background-end));
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ✅ Universal responsive base tweaks */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  h1, h2, h3 {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+
+  p, label, input, textarea, select, button {
+    @apply text-sm sm:text-base;
+  }
+
+  button, input, textarea, select {
+    @apply rounded-lg focus:outline-none;
+  }
+
+  /* Prevent horizontal overflow on mobile */
+  body, html {
+    overflow-x: hidden;
+  }
+
+  /* Smooth transitions */
+  * {
+    transition: all 0.2s ease-in-out;
+  }
+}
+
+/* 🎨 Buttons */
+.button-primary {
+  background: linear-gradient(to right, var(--accent-blue-start), var(--accent-blue-end));
+  color: #FFFFFF;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.button-primary:hover {
+  background: linear-gradient(to right, #4F46E5, #3B82F6);
+}
 
 @theme inline {
   --color-background: var(--background);

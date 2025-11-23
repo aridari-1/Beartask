@@ -29,7 +29,6 @@ export default function PostTask() {
     fetchUser();
   }, [router]);
 
-  // ✅ Updated task categories
   const taskOptions = {
     "Home & Everyday Help": [
       "Cleaning",
@@ -38,11 +37,7 @@ export default function PostTask() {
       "Move Furniture",
       "Custom",
     ],
-    "Campus Life": [
-      "Academic Help",
-      "Quick Favors",
-      "Custom",
-    ],
+    "Campus Life": ["Academic Help", "Quick Favors", "Custom"],
   };
 
   const handlePost = async (e) => {
@@ -52,7 +47,7 @@ export default function PostTask() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username")
+      .select("username, city")   // ✅ ADDED city
       .eq("id", user.id)
       .single();
 
@@ -76,8 +71,10 @@ export default function PostTask() {
           task_time: fullTime || null,
           location,
           created_at: new Date(),
+          city: profile?.city || "Unknown",   // ✅ NEW: Save the task's city
         },
       ]);
+
       if (error) throw error;
 
       setMessage("✅ Task posted successfully!");
@@ -92,6 +89,7 @@ export default function PostTask() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center py-10 px-4">
+  
       <motion.div
         className="bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-lg max-w-md w-full"
         initial={{ opacity: 0, y: 30 }}

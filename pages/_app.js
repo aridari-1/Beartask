@@ -40,15 +40,25 @@ export default function MyApp({ Component, pageProps }) {
   // ✅ Validate allowed student email domains — only for performers
   const validateEmail = async (session) => {
     if (!session) return;
+
     const email = session.user?.email?.toLowerCase() || "";
-    const allowedDomains = ["cub.uca.edu", "hendrix.edu"];
+
+    const allowedDomains = [
+      "cub.uca.edu",
+      "hendrix.edu",
+      "stanford.edu",
+      "ucla.edu",
+      "g.ucla.edu",
+      "mit.edu",
+      "college.harvard.edu",
+    ];
+
     const domain = email.split("@")[1];
     const isValid = allowedDomains.includes(domain);
     setValidEmail(isValid);
 
     const role = localStorage.getItem("beartask_role");
 
-    // 🚨 Auto sign out only if invalid performer
     if (role === "performer" && !isValid) {
       await supabase.auth.signOut();
       localStorage.removeItem("beartask_splash_shown");
@@ -56,7 +66,6 @@ export default function MyApp({ Component, pageProps }) {
     }
   };
 
-  // 🔀 Redirect logged-in users away from "/" ONLY after they’ve completed the tutorial
   useEffect(() => {
     const redirectByRole = async () => {
       if (!session || router.pathname !== "/") return;
@@ -65,7 +74,6 @@ export default function MyApp({ Component, pageProps }) {
         typeof window !== "undefined" &&
         localStorage.getItem("beartask_tutorial_done") === "true";
 
-      // ⛔ Do not redirect from "/" until the tutorial is completed
       if (!hasSeenTutorial) return;
 
       const { data: profile, error } = await supabase
@@ -108,7 +116,6 @@ export default function MyApp({ Component, pageProps }) {
         }
 
         if (!profile?.role) {
-          console.warn("User missing role, redirecting to role-select...");
           router.push("/role-select");
         }
       } catch (err) {

@@ -31,11 +31,36 @@ export default function CreateProfile() {
     const { data: { user } } = await supabase.auth.getUser();
     const email = user.email;
 
-    const detectedSchool = email.includes("@cub.uca.edu")
-      ? "University of Central Arkansas"
-      : email.includes("@hendrix.edu")
-      ? "Hendrix College"
-      : "Unknown";
+   // Auto-detect school from email
+const detectedSchool = email.includes("@cub.uca.edu")
+  ? "University of Central Arkansas"
+  : email.includes("@hendrix.edu")
+  ? "Hendrix College"
+  : email.includes("@stanford.edu")
+  ? "Stanford University"
+  : email.includes("@ucla.edu") || email.includes("@g.ucla.edu")
+  ? "University of California, Los Angeles"
+  : email.includes("@mit.edu")
+  ? "Massachusetts Institute of Technology"
+  : email.includes("@college.harvard.edu")
+  ? "Harvard College"
+  : "Unknown";
+
+// Auto-assign city based on school
+const detectedCity =
+  detectedSchool === "University of Central Arkansas" ||
+  detectedSchool === "Hendrix College"
+    ? "Conway, AR"
+    : detectedSchool === "Stanford University"
+    ? "Stanford, CA"
+    : detectedSchool === "University of California, Los Angeles"
+    ? "Los Angeles, CA"
+    : detectedSchool === "Massachusetts Institute of Technology" ||
+      detectedSchool === "Harvard College"
+    ? "Cambridge, MA"
+    : "Unknown";
+
+
 
     // ✅ Get role from localStorage
     const role = localStorage.getItem("beartask_role");
@@ -47,6 +72,7 @@ export default function CreateProfile() {
           username: username.trim(),
           email: email,
           school: school || detectedSchool,
+          city: detectedCity, 
           role: role || null,
           created_at: new Date(),
         },

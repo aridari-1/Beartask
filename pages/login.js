@@ -24,10 +24,16 @@ export default function Login() {
   }, []);
 
   // 🏫 Allowed school and testing domains
-  const allowedDomains = {
-    "University of Central Arkansas": "@cub.uca.edu",
-    "Hendrix College": "@hendrix.edu",
-  };
+  // 🏫 Allowed school and testing domains
+const allowedDomains = {
+  "University of Central Arkansas": "@cub.uca.edu",
+  "Hendrix College": "@hendrix.edu",
+  "Stanford University": "@stanford.edu",
+  "UCLA": "@ucla.edu",
+  "UCLA Graduate": "@g.ucla.edu",
+  "MIT": "@mit.edu",
+  "Harvard College": "@college.harvard.edu",
+};
 
   // 🔹 Step 1: Send verification code
   const sendCode = async (e) => {

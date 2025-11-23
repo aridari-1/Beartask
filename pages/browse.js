@@ -10,37 +10,48 @@ export default function BrowseTasks() {
 
   useEffect(() => {
     const fetchUserAndTasks = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("username")
+          .select("username, city")   // ✅ ADDED city
           .eq("id", user.id)
           .single();
+
         setUserInfo({
           id: user.id,
           username: profile?.username || user.email.split("@")[0],
+          city: profile?.city || "Unknown",     // ✅ save performer city
         });
       }
 
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .neq("status", "completed")
-        .order("created_at", { ascending: false });
-
-      if (error) console.error(error);
-      else setTasks(data);
+      // Wait until userInfo is set
       setLoading(false);
     };
+
     fetchUserAndTasks();
   }, []);
 
-  // 🔔 NEW: realtime subscription for newly posted tasks (no other logic changed)
+  // 🔥 NEW fetching tasks AFTER userInfo loads
   useEffect(() => {
-    // Ensure the table is in the Realtime publication on the DB (see instructions below)
+    if (!userInfo) return;
+
+    const fetchCityTasks = async () => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("city", userInfo.city)       // ✅ SHOW ONLY SAME CITY TASKS
+        .neq("status", "completed")
+        .order("created_at", { ascending: false });
+
+      if (!error) setTasks(data);
+    };
+
+    fetchCityTasks();
+  }, [userInfo]);
+
+  // 🟣 Your realtime listener (unchanged)
+  useEffect(() => {
     const channel = supabase
       .channel("tasks-updates")
       .on(
@@ -48,12 +59,13 @@ export default function BrowseTasks() {
         { event: "INSERT", schema: "public", table: "tasks" },
         (payload) => {
           const newTask = payload.new;
-          // avoid duplicates if list already includes it
-          setTasks((prev) => {
-            if (prev.some((t) => t.id === newTask.id)) return prev;
-            // keep your newest-first order
-            return [newTask, ...prev];
-          });
+
+          if (newTask.city === userInfo?.city) {   // ✅ Only insert if same city
+            setTasks((prev) => {
+              if (prev.some((t) => t.id === newTask.id)) return prev;
+              return [newTask, ...prev];
+            });
+          }
         }
       )
       .subscribe();
@@ -61,7 +73,10 @@ export default function BrowseTasks() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [userInfo]);
+
+  // 🔥 ALL OTHER LOGIC REMAINS IDENTICAL
+
 
   const handleAcceptTask = async (taskId) => {
     if (!userInfo) {
