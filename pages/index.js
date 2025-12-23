@@ -1,41 +1,30 @@
-import { supabase } from "../lib/supabaseClient";
-import { motion } from "framer-motion";
-import Image from "next/image";
-import icon from "../public/favicon.ico.ico"; // ✅ Make sure the file is in /public folder
+import Link from "next/link";
 
 export default function Home() {
-  console.log("Supabase connected:", !!supabase);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-600 flex flex-col items-center justify-center text-white text-center p-6">
-      <motion.div
-        initial={{ opacity: 0, y: -40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="flex items-center justify-center gap-2 mb-6"
-      >
-        <Image
-          src={icon}
-          alt="BearTask logo"
-          width={45}
-          height={45}
-          className="rounded-md"
-        />
-        <h1 className="text-5xl font-bold">BearTask</h1>
-      </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-700 to-indigo-700 text-white flex items-center justify-center px-6">
+      <div className="max-w-3xl text-center">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-6">
+          Support students. Receive a digital collectible.
+        </h1>
 
-      <p className="text-lg mb-4 max-w-xl">
-         connecting people
-        who need assistance with verified college students ready to lend a
-        hand.
-      </p>
+        <p className="text-lg text-white/90 mb-8">
+          BearTask connects supporters and college students through curated digital
+          collections. Each contribution supports students and grants a unique
+          digital collectible.
+        </p>
 
-      <a
-        href="/role-select"
-        className="bg-amber-400 text-purple-900 font-bold px-8 py-3 rounded-full shadow-lg hover:bg-amber-500 transition"
-      >
-        Get Started
-      </a>
+        <Link
+          href="/collections"
+          className="inline-block bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold px-8 py-4 rounded-2xl transition"
+        >
+          Explore Collections
+        </Link>
+
+        <p className="mt-6 text-sm text-white/70">
+          Verified students may be eligible for support draws.
+        </p>
+      </div>
     </div>
   );
 }

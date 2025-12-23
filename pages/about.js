@@ -10,58 +10,46 @@ export default function About() {
         className="max-w-3xl bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-8 text-center"
       >
         <h1 className="text-4xl font-bold mb-4">About BearTask 🐻</h1>
+
         <p className="text-white/90 mb-8 leading-relaxed">
-          <strong>BearTask</strong> is a local help platform powered by verified
-          college students. It connects people who need quick assistance with
-          reliable, trusted student helpers who are ready to lend a hand. from
-          home help and errands to academic support and tutoring.
+          <strong>BearTask</strong> is a student-powered support platform that
+          connects the public with verified college students through curated
+          digital collections. By supporting these collections, individuals
+          help students financially while receiving meaningful digital items in
+          return.
         </p>
 
         <h2 className="text-2xl font-semibold mb-3 text-amber-300">
           🎯 Our Mission
         </h2>
         <p className="text-white/90 mb-8 leading-relaxed">
-          To make everyday life easier by connecting communities with verified students. BearTask bridges the gap between
-          those who need help and those willing to help, creating value for
-          everyone.
+          To empower college students financially by creating ethical,
+          transparent ways for communities to support them through digital
+          products and shared opportunities.
         </p>
 
         <h2 className="text-2xl font-semibold mb-3 text-amber-300">
           🌱 Our Vision
         </h2>
         <p className="text-white/90 mb-8 leading-relaxed">
-          We aim to build a network where local people can rely on college
-          students for real-world assistance; from everyday chores to learning
-          support. BearTask envisions a future where students grow through
-          experience while making a positive impact in their communities.
+          We envision a future where students are supported beyond traditional
+          jobs — through creativity, community engagement, and responsible
+          digital ownership.
         </p>
 
         <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          💬 Our Promise
+          💬 Our Commitment
         </h2>
         <ul className="text-left list-disc list-inside text-white/90 mb-10 space-y-2">
-          <li>
-            Verified student performers to ensure safety, reliability, and
-            authenticity.
-          </li>
-          <li>
-            Transparent, fair pricing for every task. No overcharging, no
-            underpaying.
-          </li>
-          <li>
-            Respectful communication at every step of the
-            process.
-          </li>
-          <li>
-            Real-world opportunities for students to earn, learn, and contribute
-            meaningfully.
-          </li>
+          <li>Verified student ambassadors and contributors.</li>
+          <li>Transparent collection structures and clear participation rules.</li>
+          <li>No misleading promises or hidden conditions.</li>
+          <li>Respectful, ethical use of digital products.</li>
         </ul>
 
         <p className="text-white/80 mb-6">
-          BearTask isn’t just about tasks, it’s about connecting people,
-          building trust, and creating opportunities through simple acts of help
-          and collaboration.
+          BearTask is about trust, creativity, and collective support — not
+          speculation or financial guarantees.
         </p>
 
         <Link

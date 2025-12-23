@@ -13,7 +13,9 @@ export default function CreateProfile() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         router.push("/login");
         return;
@@ -28,62 +30,75 @@ export default function CreateProfile() {
     if (!username.trim()) return alert("Please choose a username.");
     setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    const email = user.email;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-   // Auto-detect school from email
-const detectedSchool = email.includes("@cub.uca.edu")
-  ? "University of Central Arkansas"
-  : email.includes("@hendrix.edu")
-  ? "Hendrix College"
-  : email.includes("@stanford.edu")
-  ? "Stanford University"
-  : email.includes("@ucla.edu") || email.includes("@g.ucla.edu")
-  ? "University of California, Los Angeles"
-  : email.includes("@mit.edu")
-  ? "Massachusetts Institute of Technology"
-  : email.includes("@college.harvard.edu")
-  ? "Harvard College"
-  : "Unknown";
+    const email = user.email.toLowerCase();
 
-// Auto-assign city based on school
-const detectedCity =
-  detectedSchool === "University of Central Arkansas" ||
-  detectedSchool === "Hendrix College"
-    ? "Conway, AR"
-    : detectedSchool === "Stanford University"
-    ? "Stanford, CA"
-    : detectedSchool === "University of California, Los Angeles"
-    ? "Los Angeles, CA"
-    : detectedSchool === "Massachusetts Institute of Technology" ||
-      detectedSchool === "Harvard College"
-    ? "Cambridge, MA"
-    : "Unknown";
+    const detectedSchool = email.includes("@cub.uca.edu")
+      ? "University of Central Arkansas"
+      : email.includes("@hendrix.edu")
+      ? "Hendrix College"
+      : email.includes("@stanford.edu")
+      ? "Stanford University"
+      : email.includes("@ucla.edu") || email.includes("@g.ucla.edu")
+      ? "University of California, Los Angeles"
+      : email.includes("@mit.edu")
+      ? "Massachusetts Institute of Technology"
+      : email.includes("@college.harvard.edu")
+      ? "Harvard College"
+      : "Unknown";
 
+    const detectedCity =
+      detectedSchool === "University of Central Arkansas" ||
+      detectedSchool === "Hendrix College"
+        ? "Conway, AR"
+        : detectedSchool === "Stanford University"
+        ? "Stanford, CA"
+        : detectedSchool === "University of California, Los Angeles"
+        ? "Los Angeles, CA"
+        : detectedSchool === "Massachusetts Institute of Technology" ||
+          detectedSchool === "Harvard College"
+        ? "Cambridge, MA"
+        : "Unknown";
 
-
-    // ✅ Get role from localStorage
-    const role = localStorage.getItem("beartask_role");
+    // ✅ NEW: determine student status
+    const isStudent =
+      email.endsWith(".edu") ||
+      email.includes("@cub.uca.edu") ||
+      email.includes("@hendrix.edu") ||
+      email.includes("@stanford.edu") ||
+      email.includes("@ucla.edu") ||
+      email.includes("@g.ucla.edu") ||
+      email.includes("@mit.edu") ||
+      email.includes("@college.harvard.edu");
 
     try {
-      const { error } = await supabase.from("profiles").insert([
-        {
-          id: user.id,
-          username: username.trim(),
-          email: email,
-          school: school || detectedSchool,
-          city: detectedCity, 
-          role: role || null,
-          created_at: new Date(),
-        },
-      ]);
+     const { error } = await supabase
+  .from("profiles")
+  .upsert(
+    [
+      {
+        id: user.id,
+        username: username.trim(),
+        email,
+        school: school || detectedSchool,
+        city: detectedCity,
+        is_student: isStudent,
+        created_at: new Date(),
+      },
+    ],
+    { onConflict: "id" }
+  );
+
 
       if (error) throw error;
 
       setSuccess(true);
       setTimeout(() => {
         router.push("/how-to-use");
-      }, 1500);
+      }, 1200);
     } catch (err) {
       console.error(err);
       alert("Error creating profile.");
@@ -127,7 +142,7 @@ const detectedCity =
               value={school}
               onChange={(e) => setSchool(e.target.value)}
               className="w-full bg-white/20 border border-white/30 rounded-lg p-2 text-white focus:ring-2 focus:ring-amber-400 outline-none"
-              placeholder="e.g., University of Central Arkansas"
+              placeholder="e.g., Stanford University"
             />
           </div>
 

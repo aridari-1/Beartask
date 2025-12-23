@@ -7,28 +7,27 @@ import { ArrowRight, ArrowLeft } from "lucide-react";
 export default function HowToUse() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const slides = [
     {
       title: "Welcome to BearTask 🐻",
-      text: "BearTask connects students with people who need help around campus or town.",
+      text: "BearTask connects college students with people who want to support them by purchasing digital collectibles.",
       icon: "🤝",
     },
     {
       title: "How It Works 🔁",
-      text: "Anyone (like you!) can request a service. Verified college students complete those tasks for money.",
+      text: "Each collection supports students. When you support a collection, you receive a unique digital item.",
+      icon: "🎨",
+    },
+    {
+      title: "Direct Support 💛",
+      text: "Your support helps students financially. Digital items may be collectible or resellable in the future.",
       icon: "💼",
     },
     {
-      title: "Direct Payment 💵",
-      text: "All payments are made directly between poster and performer. BearTask does not handle transactions inside the app.",
-      icon: "💬",
-    },
-    {
-      title: "For Students 🎓",
-      text: "If you're a student performer, you must rate the poster after each task — or you won’t be able to accept new tasks.",
+      title: "Fair Use ⭐",
+      text: "Please use BearTask respectfully. Each collection exists to support students.",
       icon: "⭐",
     },
   ];
@@ -38,23 +37,16 @@ export default function HowToUse() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
       if (!user) {
-        router.push("/login");
+        router.replace("/login");
         return;
       }
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+      const hasSeen = localStorage.getItem("beartask_how_to_done");
 
-      const role = profile?.role || null;
-      setUserRole(role);
-
-      const seen = localStorage.getItem("beartask_tutorial_done");
-      if (seen && role) {
-        redirectByRole(role);
+      if (hasSeen === "true") {
+        router.replace("/collections");
         return;
       }
 
@@ -64,15 +56,9 @@ export default function HowToUse() {
     init();
   }, [router]);
 
-  const redirectByRole = (role) => {
-    if (role === "poster") router.push("/poster-home");
-    else if (role === "performer") router.push("/performer-home");
-    else router.push("/role-select");
-  };
-
   const handleFinish = () => {
-    localStorage.setItem("beartask_tutorial_done", "true");
-    redirectByRole(userRole);
+    localStorage.setItem("beartask_how_to_done", "true");
+    router.replace("/collections");
   };
 
   const next = () => setStep((prev) => Math.min(prev + 1, slides.length - 1));

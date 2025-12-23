@@ -1,145 +1,174 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
-  const [role, setRole] = useState(null);
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [userLoaded, setUserLoaded] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false); // ✅ Mobile menu toggle
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
-    const loadUserRole = async () => {
+    const loadUser = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
+      setUser(user || null);
+
       if (user) {
-        const { data: profile } = await supabase
+        const { data: prof } = await supabase
           .from("profiles")
-          .select("role")
+          .select("is_student, is_ambassador")
           .eq("id", user.id)
           .single();
-        if (profile?.role) setRole(profile.role);
+
+        setProfile(prof || null);
+      } else {
+        setProfile(null);
       }
+
       setUserLoaded(true);
     };
-    loadUserRole();
+
+    loadUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      loadUser();
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // 🔗 Role-based navigation options
-  const defaultLinks = [
-    { name: "Browse Tasks", path: "/browse" },
-    { name: "Profile", path: "/profile" },
-  ];
-
-  const posterLinks = [
-    // Poster should NOT see Browse or Post Task
-    { name: "Profile", path: "/profile" },
-  ];
-
-  const performerLinks = [
-    // Performer should NOT see Perform Task
-    { name: "Browse Tasks", path: "/browse" },
-    { name: "Profile", path: "/profile" },
-  ];
-
-  const linksToShow =
-    role === "poster"
-      ? posterLinks
-      : role === "performer"
-      ? performerLinks
-      : defaultLinks;
-
-  // ✅ New: Determine where logo should go based on role
-  const logoLink =
-    role === "poster"
-      ? "/poster-home"
-      : role === "performer"
-      ? "/performer-home"
-      : "/role-select";
+  const logout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
 
   return (
     <motion.nav
       className="bg-white/10 backdrop-blur-md border-b border-white/20 text-white sticky top-0 z-50"
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
     >
       <div className="max-w-6xl mx-auto flex justify-between items-center px-4 py-3">
-        {/* Logo */}
         <Link
-          href={logoLink} // ✅ Updated link destination
-          className="flex items-center gap-2 font-bold text-xl tracking-wide"
+          href="/"
+          className="flex items-center gap-2 font-bold text-lg tracking-wide"
         >
           <img src="/logo.png" alt="BearTask logo" className="h-8 w-8" />
           <span>BearTask</span>
         </Link>
 
-        {/* Hamburger for mobile */}
+        <div className="hidden sm:flex items-center gap-6 text-sm font-medium">
+          <Link href="/collections" className="hover:text-amber-300 transition">
+            Collections
+          </Link>
+
+          {profile?.is_student && profile?.is_ambassador && (
+            <Link href="/ambassador" className="hover:text-amber-300 transition">
+              Ambassador
+            </Link>
+          )}
+
+          {!user ? (
+            <Link
+              href="/login"
+              className="px-4 py-1.5 rounded-full bg-black text-white"
+            >
+              Login
+            </Link>
+          ) : (
+            <div className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center justify-center h-9 w-9 rounded-full bg-white/20 hover:bg-white/30 transition"
+              >
+                👤
+              </button>
+
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="absolute right-0 mt-2 w-44 bg-white text-black rounded-xl shadow-lg overflow-hidden text-sm"
+                  >
+                    <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100">
+                      Profile
+                    </Link>
+                    <Link href="/my-nfts" className="block px-4 py-2 hover:bg-gray-100">
+                      My NFTs
+                    </Link>
+                    <Link href="/trust" className="block px-4 py-2 hover:bg-gray-100">
+                      Trust Center
+                    </Link>
+                    <Link href="/about" className="block px-4 py-2 hover:bg-gray-100">
+                      About
+                    </Link>
+                    <div className="border-t" />
+                    <button
+                      onClick={logout}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                    >
+                      Logout
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+
         <button
-          className="sm:hidden text-white/90 focus:outline-none"
+          className="sm:hidden text-white/90"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? "✕" : "☰"}
         </button>
-
-        {/* Links for larger screens */}
-        <div className="hidden sm:flex items-center gap-6 text-sm font-medium">
-          {userLoaded ? (
-            <>
-              {linksToShow.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.path}
-                  className="hover:text-amber-300 transition"
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <Link href="/about" className="hover:text-amber-300 transition">
-                About
-              </Link>
-              <Link href="/trust" className="hover:text-amber-300 transition">
-                Trust Center
-              </Link>
-            </>
-          ) : (
-            <span className="text-white/70">Loading...</span>
-          )}
-        </div>
       </div>
 
-      {/* ✅ Mobile dropdown menu */}
       {menuOpen && (
-        <div className="sm:hidden flex flex-col items-start px-4 pb-3 bg-white/10 backdrop-blur-md text-sm border-t border-white/10">
-          {userLoaded ? (
+        <div className="sm:hidden bg-white/10 backdrop-blur-md border-t border-white/10 px-4 pb-4 text-sm">
+          <Link href="/collections" className="block py-2">
+            Collections
+          </Link>
+
+          {profile?.is_student && profile?.is_ambassador && (
+            <Link href="/ambassador" className="block py-2">
+              Ambassador
+            </Link>
+          )}
+
+          {user && (
             <>
-              {linksToShow.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.path}
-                  onClick={() => setMenuOpen(false)}
-                  className="block py-2 hover:text-amber-300 transition"
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <Link
-                href="/about"
-                onClick={() => setMenuOpen(false)}
-                className="block py-2 hover:text-amber-300 transition"
-              >
-                About
+              <Link href="/profile" className="block py-2">
+                Profile
               </Link>
-              <Link
-                href="/trust"
-                onClick={() => setMenuOpen(false)}
-                className="block py-2 hover:text-amber-300 transition"
-              >
+              <Link href="/my-nfts" className="block py-2">
+                My NFTs
+              </Link>
+              <Link href="/trust" className="block py-2">
                 Trust Center
               </Link>
+              <Link href="/about" className="block py-2">
+                About
+              </Link>
+              <button onClick={logout} className="block py-2 text-red-400">
+                Logout
+              </button>
             </>
-          ) : (
-            <span className="text-white/70 py-2">Loading...</span>
+          )}
+
+          {!user && (
+            <Link href="/login" className="block py-2 font-semibold">
+              Login
+            </Link>
           )}
         </div>
       )}
