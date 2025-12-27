@@ -9,6 +9,8 @@ const publicRoutes = [
   "/login",
   "/collections",
   "/collections/[id]",
+  "/success",
+  "/trust-center",
 ];
 
 export default function MyApp({ Component, pageProps }) {

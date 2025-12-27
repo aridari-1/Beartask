@@ -15,11 +15,11 @@ export default function Ambassador() {
   const [openingId, setOpeningId] = useState(null);
 
   const canOpen = useMemo(() => {
-    return (
-      !!profile?.is_student &&
-      !!profile?.is_ambassador &&
-      !activeCollection
-    );
+    // ✅ Allow ambassadors even if is_student is false
+    const isEligibleStudent =
+      !!profile?.is_student || !!profile?.is_ambassador;
+
+    return isEligibleStudent && !!profile?.is_ambassador && !activeCollection;
   }, [profile, activeCollection]);
 
   useEffect(() => {
@@ -104,7 +104,10 @@ export default function Ambassador() {
     );
   }
 
-  if (!profile?.is_student || !profile?.is_ambassador) {
+  // ✅ Keep existing UX copy + gate, but allow ambassadors as eligible students
+  const isEligibleStudent = !!profile?.is_student || !!profile?.is_ambassador;
+
+  if (!isEligibleStudent || !profile?.is_ambassador) {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-2xl mx-auto bg-white rounded-xl shadow p-6">

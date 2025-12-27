@@ -16,7 +16,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({ email });
+      const normalizedEmail = email.trim().toLowerCase();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
+      });
       if (error) throw error;
 
       // Move to verification step
@@ -36,8 +39,8 @@ export default function Login() {
 
     try {
       const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: code,
+        email: email.trim().toLowerCase(),
+        token: code.trim(),
         type: "email",
       });
 
