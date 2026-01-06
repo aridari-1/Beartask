@@ -4,6 +4,8 @@ import { supabase } from "../lib/supabaseClient";
 import Layout from "../components/Layout";
 import "../styles/globals.css";
 
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
+
 const publicRoutes = [
   "/",
   "/login",
@@ -16,66 +18,86 @@ const publicRoutes = [
 export default function MyApp({ Component, pageProps }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
     const init = async () => {
+      // 🔐 Wait for auth to be ready
       const {
         data: { session },
       } = await supabase.auth.getSession();
+
+      if (!mounted) return;
+
+      setAuthReady(true);
 
       // 🔓 Not logged in
       if (!session) {
         if (!publicRoutes.includes(router.pathname)) {
           await router.replace("/login");
         }
-        if (mounted) setLoading(false);
+        setLoading(false);
         return;
       }
 
-      // 🔍 Check profile (safe)
-      const { data: profile } = await supabase
+      // 🔍 Check profile ONLY after auth is ready
+      const { data: profile, error: profileErr } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
         .maybeSingle();
 
-      // 🚫 No profile → create profile
+      if (!mounted) return;
+
+      // ❗ IMPORTANT FIX:
+      // If Supabase cannot read the profile (RLS / transient issue),
+      // do NOT redirect to create-profile.
+      if (profileErr) {
+        console.error("Profile select error:", profileErr.message);
+        setLoading(false);
+        return;
+      }
+
+      // 🚫 Profile truly does not exist → create profile
       if (!profile) {
         if (router.pathname !== "/create-profile") {
           await router.replace("/create-profile");
         }
-        if (mounted) setLoading(false);
+        setLoading(false);
         return;
       }
 
-      // 📘 Profile exists → check tutorial
-      const hasSeenHowTo = localStorage.getItem("beartask_how_to_done");
+      // 📘 Check tutorial
+      const hasSeenHowTo =
+        typeof window !== "undefined" &&
+        localStorage.getItem("beartask_how_to_done");
 
       if (!hasSeenHowTo) {
         if (router.pathname !== "/how-to-use") {
           await router.replace("/how-to-use");
         }
-        if (mounted) setLoading(false);
+        setLoading(false);
         return;
       }
 
-      // 🚪 Prevent going back to auth/tutorial pages
+      // 🚪 Prevent returning to auth/setup pages
       if (
         ["/login", "/create-profile", "/how-to-use"].includes(router.pathname)
       ) {
         await router.replace("/collections");
-        if (mounted) setLoading(false);
+        setLoading(false);
         return;
       }
 
-      if (mounted) setLoading(false);
+      setLoading(false);
     };
 
     init();
 
     const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      if (!authReady) return;
       init();
     });
 
@@ -83,7 +105,7 @@ export default function MyApp({ Component, pageProps }) {
       mounted = false;
       listener.subscription.unsubscribe();
     };
-  }, [router.pathname]);
+  }, [router.pathname, authReady]);
 
   if (loading) {
     return (
@@ -94,8 +116,13 @@ export default function MyApp({ Component, pageProps }) {
   }
 
   return (
-    <Layout>
-      <Component {...pageProps} />
-    </Layout>
+    <SessionContextProvider
+      supabaseClient={supabase}
+      initialSession={pageProps.initialSession}
+    >
+      <Layout>
+        <Component {...pageProps} />
+      </Layout>
+    </SessionContextProvider>
   );
 }

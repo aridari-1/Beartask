@@ -42,6 +42,23 @@ export default async function handler(req, res) {
 
     const user = userRes.user;
 
+    // 🚫 BLOCK AMBASSADORS (LIVE RULE)
+    const { data: profile, error: profErr } = await supabaseAdmin
+      .from("profiles")
+      .select("is_ambassador")
+      .eq("id", user.id)
+      .single();
+
+    if (profErr) {
+      return res.status(500).json({ error: "Profile lookup failed" });
+    }
+
+    if (profile?.is_ambassador === true) {
+      return res.status(403).json({
+        error: "Ambassadors cannot support collections",
+      });
+    }
+
     // 🎯 Get first unsold item in collection
     const { data: item, error: itemErr } = await supabaseAdmin
       .from("items")
@@ -58,6 +75,21 @@ export default async function handler(req, res) {
 
     if (!item) {
       return res.status(400).json({ error: "Collection sold out" });
+    }
+
+    // 🛑 Prevent duplicate pending purchases
+    const { data: existingPending } = await supabaseAdmin
+      .from("purchases")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("item_id", item.id)
+      .eq("status", "pending")
+      .maybeSingle();
+
+    if (existingPending) {
+      return res.status(409).json({
+        error: "You already have a pending checkout for this item",
+      });
     }
 
     // 1️⃣ Create purchase FIRST
@@ -78,10 +110,11 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: purchaseErr.message });
     }
 
-    // 2️⃣ Create Stripe checkout session WITH purchase ID
+    // 2️⃣ Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card"],
+      submit_type: "pay",
+      client_reference_id: purchase.id,
       line_items: [
         {
           price_data: {
@@ -113,7 +146,6 @@ export default async function handler(req, res) {
       .update({ stripe_session_id: session.id })
       .eq("id", purchase.id);
 
-    // 4️⃣ Redirect user to Stripe
     return res.status(200).json({ url: session.url });
   } catch (err) {
     console.error("create-checkout-session error:", err);

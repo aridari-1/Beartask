@@ -3,6 +3,24 @@ import { supabase } from "../lib/supabaseClient";
 import { useRouter } from "next/router";
 import Link from "next/link";
 
+function CollapsibleCard({ title, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className="bg-neutral-900/80 border border-white/10 rounded-2xl overflow-hidden shadow-lg">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full px-6 py-4 flex items-center justify-between text-left"
+      >
+        <h2 className="text-lg font-semibold tracking-wide">{title}</h2>
+        <span className="text-white/50 text-xl">{open ? "−" : "+"}</span>
+      </button>
+
+      {open && <div className="px-6 pb-6">{children}</div>}
+    </div>
+  );
+}
+
 export default function Ambassador() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -12,20 +30,18 @@ export default function Ambassador() {
 
   const [activeCollection, setActiveCollection] = useState(null);
   const [draftCollections, setDraftCollections] = useState([]);
+  const [completedCollections, setCompletedCollections] = useState([]);
+  const [payouts, setPayouts] = useState([]);
+
   const [openingId, setOpeningId] = useState(null);
-
-  const canOpen = useMemo(() => {
-    // ✅ Allow ambassadors even if is_student is false
-    const isEligibleStudent =
-      !!profile?.is_student || !!profile?.is_ambassador;
-
-    return isEligibleStudent && !!profile?.is_ambassador && !activeCollection;
-  }, [profile, activeCollection]);
 
   useEffect(() => {
     const load = async () => {
-      const { data: authData } = await supabase.auth.getUser();
-      const u = authData?.user || null;
+      setLoading(true);
+
+      const {
+        data: { user: u },
+      } = await supabase.auth.getUser();
 
       if (!u) {
         router.push("/login");
@@ -34,7 +50,6 @@ export default function Ambassador() {
 
       setUser(u);
 
-      // Load profile
       const { data: prof } = await supabase
         .from("profiles")
         .select("*")
@@ -43,7 +58,6 @@ export default function Ambassador() {
 
       setProfile(prof || null);
 
-      // Load ambassador's active collection
       const { data: active } = await supabase
         .from("collections")
         .select("*, items(is_sold)")
@@ -54,200 +68,181 @@ export default function Ambassador() {
       if (active) {
         const soldCount = (active.items || []).filter((x) => x.is_sold).length;
         const totalCount = (active.items || []).length;
-        setActiveCollection({
-          ...active,
-          soldCount,
-          totalCount,
-        });
-      } else {
-        setActiveCollection(null);
+        setActiveCollection({ ...active, soldCount, totalCount });
       }
 
-      // Load draft collections
-      const { data: closed } = await supabase
+      const { data: drafts } = await supabase
         .from("collections")
-        .select("id, title, description, cover_image_url, created_at")
+        .select("id, title, description, created_at, opened_by, status")
         .eq("status", "closed")
+        .or(`opened_by.is.null,opened_by.eq.${u.id}`)
         .order("created_at", { ascending: true });
 
-      setDraftCollections(closed || []);
+      setDraftCollections(drafts || []);
+
+      const { data: completed } = await supabase
+        .from("collections")
+        .select("id, title, cagnotte_total, completed_at")
+        .eq("opened_by", u.id)
+        .eq("status", "sold_out")
+        .order("completed_at", { ascending: false });
+
+      setCompletedCollections(completed || []);
+
+      const { data: payoutRows } = await supabase
+        .from("payouts")
+        .select("amount, status")
+        .eq("user_id", u.id)
+        .eq("role", "ambassador");
+
+      setPayouts(payoutRows || []);
       setLoading(false);
     };
 
     load();
   }, [router]);
 
+  /**
+   * 🔧 FIXED FUNCTION
+   * - Selects a gift item FIRST
+   * - Inserts ambassador_gifts SAFELY
+   * - THEN opens the collection
+   */
   const openCollection = async (collectionId) => {
     try {
       setOpeningId(collectionId);
 
-      const { data, error } = await supabase.rpc("open_collection", {
-        p_collection_id: collectionId,
-      });
+      // 1️⃣ Select ONE gift item (required)
+      const { data: gift, error: giftError } = await supabase
+        .from("ambassador_gift_items")
+        .select("id, nft_url")
+        .limit(1)
+        .single();
+
+      if (giftError || !gift) {
+        throw new Error("No ambassador gift item available.");
+      }
+
+     
+
+      
+
+      // 3️⃣ Open the collection
+      const { data: updated, error } = await supabase
+        .from("collections")
+        .update({
+          status: "active",
+          opened_by: user.id,
+        })
+        .eq("id", collectionId)
+        .select("id")
+        .single();
 
       if (error) throw error;
 
-      router.push(`/collections/${data.id}`);
+      router.push(`/collections/${updated.id}`);
     } catch (err) {
-      console.error("Open collection error:", err);
-      alert(err?.message || "Could not open collection. Try again.");
+      console.error(err);
+      alert("Could not open collection.");
     } finally {
       setOpeningId(null);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading ambassador dashboard…
-      </div>
-    );
-  }
+  const earnings = useMemo(() => {
+    let total = 0,
+      paid = 0,
+      pending = 0;
 
-  // ✅ Keep existing UX copy + gate, but allow ambassadors as eligible students
-  const isEligibleStudent = !!profile?.is_student || !!profile?.is_ambassador;
+    payouts.forEach((p) => {
+      const amt = Number(p.amount || 0);
+      total += amt;
+      p.status === "paid" ? (paid += amt) : (pending += amt);
+    });
 
-  if (!isEligibleStudent || !profile?.is_ambassador) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-2xl mx-auto bg-white rounded-xl shadow p-6">
-          <h1 className="text-2xl font-bold mb-2">Ambassador Dashboard</h1>
-          <p className="text-gray-600">
-            Only verified student ambassadors can open and run collections.
-          </p>
-          <div className="mt-4">
-            <Link href="/collections" className="underline text-black">
-              Go to Collections
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    return { total, paid, pending };
+  }, [payouts]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">Ambassador Dashboard</h1>
-        <p className="text-gray-600 mb-6">
-          Open one collection at a time, promote it, and earn 5% when it sells out.
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-[var(--background-start)] to-[var(--background-end)] text-white">
+      <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
 
-        {/* Active Collection */}
-        <div className="bg-white rounded-xl shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-2">Your Active Collection</h2>
+        <header>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Ambassador Dashboard
+          </h1>
+          <p className="text-white/60 text-sm mt-1">
+            Promote collections and earn commissions
+          </p>
+        </header>
 
+        {/* Earnings */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            ["Total Earned", earnings.total, "text-white"],
+            ["Paid", earnings.paid, "text-emerald-400"],
+            ["Pending", earnings.pending, "text-amber-400"],
+          ].map(([label, value, color]) => (
+            <div
+              key={label}
+              className="bg-neutral-900/80 border border-white/10 rounded-xl p-5 shadow-md"
+            >
+              <p className="text-sm text-white/50">{label}</p>
+              <p className={`text-2xl font-semibold mt-1 ${color}`}>
+                ${value.toFixed(2)}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <CollapsibleCard title="Active Collection" defaultOpen>
           {activeCollection ? (
             <>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <div className="font-bold text-lg">{activeCollection.title}</div>
-                  <div className="text-sm text-gray-600">
-                    Progress: {activeCollection.soldCount} /{" "}
-                    {activeCollection.totalCount} sold
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() =>
-                      router.push(`/collections/${activeCollection.id}`)
-                    }
-                    className="px-4 py-2 rounded-lg bg-black text-white"
-                  >
-                    View
-                  </button>
-                  <button
-                    onClick={() =>
-                      navigator.clipboard.writeText(
-                        `${window.location.origin}/collections/${activeCollection.id}`
-                      )
-                    }
-                    className="px-4 py-2 rounded-lg bg-gray-200"
-                  >
-                    Copy link
-                  </button>
-                </div>
-              </div>
-
-              <p className="text-xs text-gray-400 mt-4">
-                You must finish this collection before opening another one.
+              <h3 className="text-xl font-semibold">{activeCollection.title}</h3>
+              <p className="text-white/50 text-sm mt-1">
+                {activeCollection.soldCount}/{activeCollection.totalCount} sold
               </p>
+              <div className="h-2 rounded-full bg-white/10 overflow-hidden mt-4">
+                <div
+                  className="h-full bg-amber-400 transition-all"
+                  style={{
+                    width: `${
+                      (activeCollection.soldCount /
+                        activeCollection.totalCount) *
+                      100
+                    }%`,
+                  }}
+                />
+              </div>
             </>
           ) : (
-            <p className="text-gray-500">
-              You don’t have an active collection right now. Open one below.
-            </p>
+            <p className="text-white/50">No active collection</p>
           )}
-        </div>
+        </CollapsibleCard>
 
-        {/* Draft Collections */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            Available Draft Collections
-          </h2>
-
-          {!canOpen && (
-            <div className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-              You already have an active collection. Finish it first to open
-              another.
-            </div>
-          )}
-
-          {draftCollections.length === 0 ? (
-            <p className="text-gray-500">
-              No draft collections available right now.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {draftCollections.map((c) => (
-                <div
-                  key={c.id}
-                  className="border rounded-xl overflow-hidden bg-white"
+        <CollapsibleCard title="Available Collections">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {draftCollections.map((c) => (
+              <div
+                key={c.id}
+                className="bg-neutral-800/60 border border-white/10 rounded-xl p-4"
+              >
+                <h3 className="font-semibold">{c.title}</h3>
+                <button
+                  disabled={openingId === c.id}
+                  onClick={() => openCollection(c.id)}
+                  className="mt-4 px-4 py-2 rounded-lg text-sm bg-gradient-to-r from-amber-400 to-yellow-300 text-black font-semibold hover:opacity-90"
                 >
-                  <div className="h-32 bg-gray-100">
-                    {c.cover_image_url ? (
-                      <img
-                        src={c.cover_image_url}
-                        alt={c.title}
-                        className="w-full h-32 object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-32 flex items-center justify-center text-gray-400 text-sm">
-                        No cover
-                      </div>
-                    )}
-                  </div>
+                  {openingId === c.id ? "Opening…" : "Open"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </CollapsibleCard>
 
-                  <div className="p-4">
-                    <div className="font-bold">{c.title}</div>
-                    <div className="text-sm text-gray-600 mt-1 line-clamp-2">
-                      {c.description || "Draft collection ready to open."}
-                    </div>
-
-                    <button
-                      disabled={!canOpen || openingId === c.id}
-                      onClick={() => openCollection(c.id)}
-                      className={`mt-4 w-full px-4 py-2 rounded-lg font-semibold ${
-                        !canOpen
-                          ? "bg-gray-200 text-gray-500"
-                          : "bg-black text-white hover:opacity-90"
-                      }`}
-                    >
-                      {openingId === c.id ? "Opening…" : "Open this collection"}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-6 text-sm">
-          <Link href="/collections" className="underline">
-            View public collections
-          </Link>
-        </div>
+        <Link href="/collections" className="text-sm underline text-white/60">
+          View public collections
+        </Link>
       </div>
     </div>
   );

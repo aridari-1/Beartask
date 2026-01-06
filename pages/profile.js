@@ -8,7 +8,6 @@ export default function Profile() {
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [isStudent, setIsStudent] = useState(false);
-  const [avgRating, setAvgRating] = useState("—");
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -22,29 +21,23 @@ export default function Profile() {
 
       setUser(user);
 
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from("profiles")
-        .select("school, username, is_student")
+        .select("*")
         .eq("id", user.id)
         .single();
 
-      if (profile) {
-        setSchool(profile.school);
-        setUsername(profile.username || user.email.split("@")[0]);
-        setIsStudent(profile.is_student === true);
+      if (error) {
+        console.error("Failed to load profile:", error.message);
+        setLoading(false);
+        return;
       }
 
-      setFullName(user.user_metadata?.full_name || "");
-
-      const { data: reviews } = await supabase
-        .from("feedback")
-        .select("rating")
-        .eq("to_user_username", profile?.username);
-
-      if (reviews && reviews.length > 0) {
-        const avg =
-          reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-        setAvgRating(avg.toFixed(1));
+      if (profile) {
+        setSchool(profile.school || "");
+        setUsername(profile.username || user.email.split("@")[0]);
+        setIsStudent(profile.is_student === true);
+        setFullName(profile.full_name || "");
       }
 
       setLoading(false);
@@ -67,14 +60,9 @@ export default function Profile() {
       .update({
         username: username.trim(),
         school: school.trim(),
+        full_name: fullName.trim(),
       })
       .eq("id", user.id);
-
-    if (fullName.trim()) {
-      await supabase.auth.updateUser({
-        data: { full_name: fullName.trim() },
-      });
-    }
 
     setSaving(false);
     setEditing(false);
@@ -100,16 +88,12 @@ export default function Profile() {
           <>
             <div className="space-y-3 mb-8">
               <p><strong>Full Name:</strong> {fullName || "—"}</p>
-              <p><strong>Username:</strong> {username}</p>
+              <p><strong>Username:</strong> {username || "—"}</p>
               <p><strong>Email:</strong> {user.email}</p>
               <p><strong>School:</strong> {school || "—"}</p>
               <p>
                 <strong>Status:</strong>{" "}
                 {isStudent ? "🎓 Student Ambassador" : "Supporter"}
-              </p>
-              <p>
-                <strong>Average Rating:</strong>{" "}
-                <span className="text-yellow-300">⭐ {avgRating}/5</span>
               </p>
             </div>
 

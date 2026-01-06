@@ -9,8 +9,10 @@ export default function CollectionDetail() {
   const { id } = router.query;
 
   const [collection, setCollection] = useState(null);
+  const [profile, setProfile] = useState(null); // ✅ ADD
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
     if (!id) return;
@@ -31,23 +33,48 @@ export default function CollectionDetail() {
     loadCollection();
   }, [id]);
 
+  // ✅ ADD: load profile (non-blocking)
+  useEffect(() => {
+    const loadProfile = async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth?.user) return;
+
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("is_ambassador")
+        .eq("id", auth.user.id)
+        .single();
+
+      setProfile(prof || null);
+    };
+
+    loadProfile();
+  }, []);
+
+  const isSoldOut = collection?.status === "sold_out";
+  const isAmbassador = profile?.is_ambassador === true; // ✅ ADD
+
   const supportNow = async (amount) => {
+    if (busy || isSoldOut || isAmbassador) return; // ✅ ADD
+
     setBusy(true);
+    setErrorMsg(null);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
         localStorage.setItem("beartask_return_collection", id);
         router.push("/login");
-        setBusy(false);
         return;
       }
 
-      const session = await supabase.auth.getSession();
-      const accessToken = session.data.session.access_token;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error("Missing auth session");
+      }
 
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
@@ -66,8 +93,8 @@ export default function CollectionDetail() {
 
       window.location.href = data.url;
     } catch (err) {
-      console.error(err);
-      alert("Something went wrong. Please try again.");
+      console.error("Support error:", err);
+      setErrorMsg(err.message || "Something went wrong.");
       setBusy(false);
     }
   };
@@ -75,7 +102,7 @@ export default function CollectionDetail() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-700 to-indigo-700 text-white">
-        Loading collection...
+        Loading collection…
       </div>
     );
   }
@@ -90,7 +117,7 @@ export default function CollectionDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-700 to-indigo-700 text-white py-10 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <Link
           href="/collections"
           className="text-white/80 hover:text-white underline text-sm"
@@ -101,69 +128,52 @@ export default function CollectionDetail() {
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4"
+          className="mt-6"
         >
-          <div className="bg-white/10 border border-white/15 rounded-2xl overflow-hidden shadow-lg">
-            <div className="h-56 bg-white/10">
-              {collection.cover_image_url ? (
-                <img
-                  src={collection.cover_image_url}
-                  alt={collection.title}
-                  className="h-56 w-full object-cover"
-                />
-              ) : (
-                <div className="h-56 flex items-center justify-center text-white/60">
-                  Cover image
-                </div>
-              )}
-            </div>
+          <div className="bg-white/10 border border-white/15 rounded-2xl shadow-lg p-6">
+            <h1 className="text-3xl font-bold">{collection.title}</h1>
 
-            <div className="p-6">
-              <h1 className="text-3xl font-bold">{collection.title}</h1>
-              <p className="text-white/85 mt-2">
-                {collection.description ||
-                  "This collection supports students through curated digital collectibles."}
-              </p>
+            <p className="text-white/85 mt-3 leading-relaxed">
+              {collection.description ||
+                "This collection supports students through curated digital collectibles."}
+            </p>
 
-              <div className="mt-4 bg-white/10 border border-white/20 rounded-xl p-4 text-sm text-white/90">
-                <strong>Lottery Rule:</strong> Student supporters receive{" "}
-                <strong>one equal lottery entry per collection</strong>. Buying
-                multiple items does not increase your chances.
+            {/* ✅ Ambassador UI notice */}
+            {isAmbassador && (
+              <div className="mt-5 bg-amber-500/20 border border-amber-400/40 rounded-xl p-4 text-sm text-amber-100">
+                ⚠️ Ambassadors cannot support collections.
               </div>
+            )}
 
-              <div className="mt-6 grid sm:grid-cols-4 gap-3">
-                <button
-                  disabled={busy}
-                  onClick={() => supportNow(5)}
-                  className="bg-amber-400 hover:bg-amber-500 disabled:opacity-60 text-purple-900 font-semibold py-3 rounded-xl transition"
-                >
-                  $5 — Supporter (students)
-                </button>
-
-                <button
-                  disabled={busy}
-                  onClick={() => supportNow(8)}
-                  className="bg-amber-400 hover:bg-amber-500 disabled:opacity-60 text-purple-900 font-semibold py-3 rounded-xl transition"
-                >
-                  $8 — Civil supports
-                </button>
-
-                <button
-                  disabled={busy}
-                  onClick={() => supportNow(10)}
-                  className="bg-amber-400 hover:bg-amber-500 disabled:opacity-60 text-purple-900 font-semibold py-3 rounded-xl transition"
-                >
-                  $10 — Alumni supports
-                </button>
-
-                <button
-                  disabled={busy}
-                  onClick={() => supportNow(15)}
-                  className="bg-amber-400 hover:bg-amber-500 disabled:opacity-60 text-purple-900 font-semibold py-3 rounded-xl transition"
-                >
-                  $15 — Boss supports
-                </button>
+            {isSoldOut && (
+              <div className="mt-5 bg-red-500/20 border border-red-400/40 rounded-xl p-4 text-sm text-red-100">
+                🚫 This collection is sold out. Thank you for the support!
               </div>
+            )}
+
+            {errorMsg && (
+              <div className="mt-4 bg-red-500/20 border border-red-400/40 rounded-xl p-3 text-sm text-red-100">
+                {errorMsg}
+              </div>
+            )}
+
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[5, 8, 10, 15].map((amt) => (
+                <button
+                  key={amt}
+                  disabled={busy || isSoldOut || isAmbassador}
+                  onClick={() => supportNow(amt)}
+                  className={`font-semibold py-3 rounded-xl transition
+                    ${
+                      isSoldOut || isAmbassador
+                        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                        : "bg-amber-400 hover:bg-amber-500 text-purple-900"
+                    }
+                    disabled:opacity-60`}
+                >
+                  ${amt} Support
+                </button>
+              ))}
             </div>
           </div>
         </motion.div>
