@@ -36,6 +36,13 @@ export default function MyApp({ Component, pageProps }) {
       // 🔓 Not logged in
       if (!session) {
         if (!publicRoutes.includes(router.pathname)) {
+          // ✅ ADD: preserve full return URL (including ambassador ref)
+          if (typeof window !== "undefined") {
+            const fullPath =
+              router.asPath || `${router.pathname}${window.location.search}`;
+            localStorage.setItem("beartask_return_url", fullPath);
+          }
+
           await router.replace("/login");
         }
         setLoading(false);

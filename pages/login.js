@@ -46,16 +46,14 @@ export default function Login() {
 
       if (error) throw error;
 
-      // 🔁 Optional return to specific collection
-      const returnCollection = localStorage.getItem(
-        "beartask_return_collection"
-      );
+      // ✅ ADD: return to original page (collection + ambassador ref)
+      const returnUrl = localStorage.getItem("beartask_return_url");
 
-      if (returnCollection) {
-        localStorage.removeItem("beartask_return_collection");
-        router.push(`/collections/${returnCollection}`);
+      if (returnUrl) {
+        localStorage.removeItem("beartask_return_url");
+        router.push(returnUrl);
       } else {
-        // ✅ Neutral landing — let _app.js decide next step
+        // Default fallback
         router.push("/collections");
       }
     } catch (err) {

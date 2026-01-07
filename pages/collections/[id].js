@@ -6,10 +6,10 @@ import { motion } from "framer-motion";
 
 export default function CollectionDetail() {
   const router = useRouter();
-  const { id } = router.query;
+  const { id, ref } = router.query; // ✅ ADD: read ambassador ref
 
   const [collection, setCollection] = useState(null);
-  const [profile, setProfile] = useState(null); // ✅ ADD
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -33,7 +33,7 @@ export default function CollectionDetail() {
     loadCollection();
   }, [id]);
 
-  // ✅ ADD: load profile (non-blocking)
+  // ✅ load profile (non-blocking)
   useEffect(() => {
     const loadProfile = async () => {
       const { data: auth } = await supabase.auth.getUser();
@@ -52,10 +52,10 @@ export default function CollectionDetail() {
   }, []);
 
   const isSoldOut = collection?.status === "sold_out";
-  const isAmbassador = profile?.is_ambassador === true; // ✅ ADD
+  const isAmbassador = profile?.is_ambassador === true;
 
   const supportNow = async (amount) => {
-    if (busy || isSoldOut || isAmbassador) return; // ✅ ADD
+    if (busy || isSoldOut || isAmbassador) return;
 
     setBusy(true);
     setErrorMsg(null);
@@ -64,7 +64,9 @@ export default function CollectionDetail() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        localStorage.setItem("beartask_return_collection", id);
+        // ✅ ADD: preserve return URL + ambassador ref
+        const returnUrl = `/collections/${id}${ref ? `?ref=${ref}` : ""}`;
+        localStorage.setItem("beartask_return_url", returnUrl);
         router.push("/login");
         return;
       }
@@ -85,6 +87,7 @@ export default function CollectionDetail() {
         body: JSON.stringify({
           supportAmount: amount,
           collectionId: id,
+          ambassadorRef: ref || null, // ✅ ADD: pass ambassador ref
         }),
       });
 
@@ -138,7 +141,6 @@ export default function CollectionDetail() {
                 "This collection supports students through curated digital collectibles."}
             </p>
 
-            {/* ✅ Ambassador UI notice */}
             {isAmbassador && (
               <div className="mt-5 bg-amber-500/20 border border-amber-400/40 rounded-xl p-4 text-sm text-amber-100">
                 ⚠️ Ambassadors cannot support collections.

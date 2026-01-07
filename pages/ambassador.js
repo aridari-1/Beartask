@@ -34,6 +34,7 @@ export default function Ambassador() {
   const [payouts, setPayouts] = useState([]);
 
   const [openingId, setOpeningId] = useState(null);
+  const [copied, setCopied] = useState(false); // ✅ ADD
 
   useEffect(() => {
     const load = async () => {
@@ -102,32 +103,10 @@ export default function Ambassador() {
     load();
   }, [router]);
 
-  /**
-   * 🔧 FIXED FUNCTION
-   * - Selects a gift item FIRST
-   * - Inserts ambassador_gifts SAFELY
-   * - THEN opens the collection
-   */
   const openCollection = async (collectionId) => {
     try {
       setOpeningId(collectionId);
 
-      // 1️⃣ Select ONE gift item (required)
-      const { data: gift, error: giftError } = await supabase
-        .from("ambassador_gift_items")
-        .select("id, nft_url")
-        .limit(1)
-        .single();
-
-      if (giftError || !gift) {
-        throw new Error("No ambassador gift item available.");
-      }
-
-     
-
-      
-
-      // 3️⃣ Open the collection
       const { data: updated, error } = await supabase
         .from("collections")
         .update({
@@ -147,6 +126,19 @@ export default function Ambassador() {
     } finally {
       setOpeningId(null);
     }
+  };
+
+  // ✅ ADD: shareable link
+  const shareLink = useMemo(() => {
+    if (!activeCollection || !user) return null;
+    return `${process.env.NEXT_PUBLIC_SITE_URL}/collections/${activeCollection.id}?ref=${user.id}`;
+  }, [activeCollection, user]);
+
+  const copyLink = async () => {
+    if (!shareLink) return;
+    await navigator.clipboard.writeText(shareLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const earnings = useMemo(() => {
@@ -176,25 +168,6 @@ export default function Ambassador() {
           </p>
         </header>
 
-        {/* Earnings */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            ["Total Earned", earnings.total, "text-white"],
-            ["Paid", earnings.paid, "text-emerald-400"],
-            ["Pending", earnings.pending, "text-amber-400"],
-          ].map(([label, value, color]) => (
-            <div
-              key={label}
-              className="bg-neutral-900/80 border border-white/10 rounded-xl p-5 shadow-md"
-            >
-              <p className="text-sm text-white/50">{label}</p>
-              <p className={`text-2xl font-semibold mt-1 ${color}`}>
-                ${value.toFixed(2)}
-              </p>
-            </div>
-          ))}
-        </div>
-
         <CollapsibleCard title="Active Collection" defaultOpen>
           {activeCollection ? (
             <>
@@ -202,6 +175,7 @@ export default function Ambassador() {
               <p className="text-white/50 text-sm mt-1">
                 {activeCollection.soldCount}/{activeCollection.totalCount} sold
               </p>
+
               <div className="h-2 rounded-full bg-white/10 overflow-hidden mt-4">
                 <div
                   className="h-full bg-amber-400 transition-all"
@@ -214,6 +188,28 @@ export default function Ambassador() {
                   }}
                 />
               </div>
+
+              {/* ✅ ADD: Share link */}
+              {shareLink && (
+                <div className="mt-5 bg-white/5 border border-white/10 rounded-xl p-4">
+                  <p className="text-sm text-white/70 mb-2">
+                    Share this link to promote your collection:
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      readOnly
+                      value={shareLink}
+                      className="flex-1 px-3 py-2 rounded-lg bg-black/30 text-xs text-white/80"
+                    />
+                    <button
+                      onClick={copyLink}
+                      className="px-4 py-2 rounded-lg bg-amber-400 text-black font-semibold text-sm"
+                    >
+                      {copied ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <p className="text-white/50">No active collection</p>
