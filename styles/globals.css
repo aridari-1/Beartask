@@ -43,3 +43,20 @@ p {
   border-radius: 8px;
   font-weight: 600;
 }
+
+/* ===================================================== */
+/* 🔑 NFT IMAGE VISIBILITY FIX — DO NOT REMOVE            */
+/* ===================================================== */
+
+/* Prevent gradient / glass overlays from blocking content */
+.relative::before,
+.relative::after {
+  pointer-events: none;
+}
+
+/* Ensure images always paint above card overlays */
+img {
+  position: relative;
+  z-index: 1;
+  display: block;
+}

@@ -1,57 +1,34 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { useRouter } from "next/router";
-import { motion } from "framer-motion";
 
 export default function MyNFTs() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [nfts, setNfts] = useState([]);
+  const [items, setItems] = useState([]);
 
   useEffect(() => {
     const loadNFTs = async () => {
+      setLoading(true);
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/login");
+        setLoading(false);
         return;
       }
 
-      // 🔒 EXISTING LOGIC (UNCHANGED)
-      // Only PAID purchases represent real NFTs
-      const { data: purchases, error } = await supabase
-        .from("purchases")
-        .select(`
-          id,
-          created_at,
-          items (
-            id,
-            title,
-            media_url
-          ),
-          collections (
-            title
-          )
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "paid")
-        .order("created_at", { ascending: false });
+      /* ---------------- Ambassador Gifts ---------------- */
 
-      if (error) {
-        console.error("Load NFTs error:", error);
-      }
-
-      // 🆕 ADD: Ambassador Gift NFTs
       const { data: gifts, error: giftError } = await supabase
         .from("ambassador_gifts")
         .select(`
           id,
           received_at,
           nft_url,
-          gift:ambassador_gift_items (
-            title
+          gift: ambassador_gift_items (
+            title,
+            nft_url
           ),
           collections (
             title
@@ -61,39 +38,63 @@ export default function MyNFTs() {
         .order("received_at", { ascending: false });
 
       if (giftError) {
-        console.error("Load gift NFTs error:", giftError);
+        console.error("Gift error:", giftError);
       }
 
-      // 🔗 Normalize gifts to match existing NFT shape
       const normalizedGifts = (gifts || []).map((g) => ({
-        id: `gift-${g.id}`, // avoid key collision
+        id: `gift-${g.id}`,
         created_at: g.received_at,
         items: {
-  title: g.gift?.title || "Legendary Ambassador NFT",
-  media_url: g.gift?.nft_url || g.nft_url,
-},
-
+          title: g.gift?.title || "Legendary Ambassador NFT",
+          media_url: g.gift?.nft_url || g.nft_url,
+        },
         collections: {
           title: g.collections?.title || "Ambassador Reward",
         },
       }));
 
-      // 🔗 Merge (no logic removed)
-      const merged = [...(purchases || []), ...normalizedGifts].sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
-      );
+      /* ---------------- Purchased NFTs ---------------- */
 
-      setNfts(merged);
+      const { data: purchases, error: purchaseError } = await supabase
+        .from("purchases")
+        .select(`
+          id,
+          created_at,
+          nft_url,
+          collections (
+            title
+          )
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (purchaseError) {
+        console.error("Purchase error:", purchaseError);
+      }
+
+      const normalizedPurchases = (purchases || []).map((p) => ({
+        id: `purchase-${p.id}`,
+        created_at: p.created_at,
+        items: {
+          title: p.collections?.title || "NFT",
+          media_url: p.nft_url,
+        },
+        collections: {
+          title: p.collections?.title || "Collection",
+        },
+      }));
+
+      setItems([...normalizedGifts, ...normalizedPurchases]);
       setLoading(false);
     };
 
     loadNFTs();
-  }, [router]);
+  }, []);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-700 to-indigo-700 text-white">
-        Loading your NFTs…
+      <div className="min-h-screen flex items-center justify-center text-white">
+        Loading NFTs…
       </div>
     );
   }
@@ -102,56 +103,41 @@ export default function MyNFTs() {
     <div className="min-h-screen bg-gradient-to-br from-purple-700 to-indigo-700 p-6 text-white">
       <h1 className="text-3xl font-bold mb-6">My NFTs</h1>
 
-      {nfts.length === 0 ? (
-        <p className="text-white/80">
-          You don’t own any NFTs yet.
-        </p>
-      ) : (
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {nfts.map((nft) => (
-            <motion.div
-              key={nft.id}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-white/10 border border-white/20 rounded-2xl overflow-hidden shadow-lg cursor-pointer"
-              onClick={() =>
-                alert(
-                  `NFT: ${nft.items?.title}\nCollection: ${nft.collections?.title}`
-                )
-              }
-            >
-              <div className="h-56 bg-white/5 flex items-center justify-center">
-                {nft.items?.media_url ? (
-                  <img
-                    src={nft.items.media_url}
-                    alt={nft.items.title}
-                    className="h-56 w-full object-cover"
-                  />
-                ) : (
-                  <span className="text-white/60">
-                    No image
-                  </span>
-                )}
-              </div>
-
-              <div className="p-4">
-                <h2 className="font-semibold text-lg">
-                  {nft.items?.title}
-                </h2>
-
-                <p className="text-sm text-white/70">
-                  {nft.collections?.title}
-                </p>
-
-                <p className="text-xs text-white/50 mt-1">
-                  Acquired on{" "}
-                  {new Date(nft.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+      {items.length === 0 && (
+        <p className="text-white/70">You don’t own any NFTs yet.</p>
       )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {items.map((nft) => (
+          <div
+            key={nft.id}
+            className="relative rounded-2xl bg-white/10 border border-white/20 overflow-hidden"
+          >
+            {/* 🔑 IMAGE LAYER — MUST BE ABOVE OVERLAY */}
+            <div className="relative z-10 h-56 w-full overflow-hidden">
+              <img
+                src={nft.items.media_url}
+                alt={nft.items.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {/* CONTENT */}
+            <div className="p-4">
+              <h2 className="text-lg font-semibold">
+                {nft.items.title}
+              </h2>
+              <p className="text-sm text-white/70">
+                {nft.collections.title}
+              </p>
+              <p className="text-xs text-white/50 mt-1">
+                Acquired on{" "}
+                {new Date(nft.created_at).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
