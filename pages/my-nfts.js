@@ -69,9 +69,10 @@ export default function MyNFTs() {
         id: `gift-${g.id}`, // avoid key collision
         created_at: g.received_at,
         items: {
-          title: g.gift?.title || "Legendary Ambassador NFT",
-          media_url: g.nft_url,
-        },
+  title: g.gift?.title || "Legendary Ambassador NFT",
+  media_url: g.gift?.nft_url || g.nft_url,
+},
+
         collections: {
           title: g.collections?.title || "Ambassador Reward",
         },
