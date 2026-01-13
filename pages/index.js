@@ -29,13 +29,6 @@ export default function Home() {
           >
             Explore Collections
           </Link>
-
-          <Link
-            href="/register"
-            className="border border-white/30 hover:border-white px-8 py-4 rounded-2xl transition"
-          >
-            Join BearTask
-          </Link>
         </div>
       </section>
 
@@ -45,14 +38,14 @@ export default function Home() {
           {[...nftImages, ...nftImages].map((img, i) => (
             <div
               key={i}
-              className="inline-block w-40 h-40 sm:w-56 sm:h-56 bg-white/10 border border-white/20 rounded-2xl overflow-hidden backdrop-blur-md"
-            >
-              <img
-                src={`/nfts/${img}`}
-                alt="BearTask NFT"
-                className="w-full h-full object-cover"
-              />
-            </div>
+              className="inline-block w-40 h-40 sm:w-56 sm:h-56 bg-white/10 border border-white/20 rounded-2xl backdrop-blur-md flex-shrink-0"
+              style={{
+                backgroundImage: `url(/nfts/${img})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }}
+            />
           ))}
         </div>
       </section>
@@ -87,12 +80,11 @@ export default function Home() {
         </div>
       </section>
 
-   
-
       {/* ================= MARQUEE ANIMATION ================= */}
       <style jsx>{`
         .animate-marquee {
           animation: marquee 35s linear infinite;
+          width: max-content;
         }
 
         @keyframes marquee {
