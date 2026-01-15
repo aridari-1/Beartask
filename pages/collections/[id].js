@@ -6,13 +6,30 @@ import { motion } from "framer-motion";
 
 export default function CollectionDetail() {
   const router = useRouter();
-  const { id, ref } = router.query; // ✅ ADD: read ambassador ref
+  const { id, ref } = router.query;
 
   const [collection, setCollection] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+
+  /* 🔑 ADD: redirect unauthenticated users but preserve return URL */
+  useEffect(() => {
+    if (!router.isReady || !id) return;
+
+    const checkAuth = async () => {
+      const { data: auth } = await supabase.auth.getUser();
+
+      if (!auth?.user) {
+        const returnUrl = `/collections/${id}${ref ? `?ref=${ref}` : ""}`;
+        localStorage.setItem("beartask_return_url", returnUrl);
+        router.replace("/login");
+      }
+    };
+
+    checkAuth();
+  }, [router.isReady, id, ref]);
 
   useEffect(() => {
     if (!id) return;
@@ -33,7 +50,7 @@ export default function CollectionDetail() {
     loadCollection();
   }, [id]);
 
-  // ✅ load profile (non-blocking)
+  // load profile (non-blocking)
   useEffect(() => {
     const loadProfile = async () => {
       const { data: auth } = await supabase.auth.getUser();
@@ -64,7 +81,6 @@ export default function CollectionDetail() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        // ✅ ADD: preserve return URL + ambassador ref
         const returnUrl = `/collections/${id}${ref ? `?ref=${ref}` : ""}`;
         localStorage.setItem("beartask_return_url", returnUrl);
         router.push("/login");
@@ -87,7 +103,7 @@ export default function CollectionDetail() {
         body: JSON.stringify({
           supportAmount: amount,
           collectionId: id,
-          ambassadorRef: ref || null, // ✅ ADD: pass ambassador ref
+          ambassadorRef: ref || null,
         }),
       });
 

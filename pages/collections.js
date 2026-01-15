@@ -38,23 +38,122 @@ export default function Collections() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-6xl mx-auto px-5 py-10">
+
+      {/* ================= FULL HERO ================= */}
+      <div className="relative w-full h-[85vh] md:h-[85vh] overflow-hidden">
+
+        {/* FULL IMAGE BACKGROUND */}
+        <img
+          src="/images/hero/ambassador-hero.png"
+          alt="BearTask Ambassador"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+
+        {/* GRADIENT OVERLAY (STRONGER ON MOBILE) */}
+        <div className="
+          absolute inset-0
+          bg-gradient-to-t md:bg-gradient-to-r
+          from-purple-900/95 via-indigo-900/80 to-purple-700/60
+        " />
+
+        {/* HERO CONTENT */}
+        <div className="
+          relative z-10
+          max-w-7xl mx-auto px-6
+          h-full
+          flex
+          items-end md:items-center
+        ">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="
+              w-full md:max-w-2xl
+              pb-10 md:pb-0
+              text-center md:text-left
+            "
+          >
+            <h1 className="
+              text-4xl md:text-6xl
+              font-extrabold
+              text-white
+              leading-tight
+            ">
+              Support Students <br className="hidden md:block" />
+              Through Art
+            </h1>
+
+            <p className="
+              mt-4 md:mt-6
+              text-base md:text-xl
+              text-white/85
+            ">
+              Every collection supports a student, rewards supporters with
+              unique digital art, and gives one person a chance to win when the
+              collection sells out.
+            </p>
+
+            <div className="
+              mt-6 md:mt-8
+              flex flex-col md:flex-row
+              gap-4
+              justify-center md:justify-start
+            ">
+              <a
+                href="#collections"
+                className="
+                  px-8 py-4
+                  rounded-xl
+                  bg-gradient-to-r from-blue-500 to-indigo-500
+                  text-white font-semibold
+                  shadow-xl
+                  hover:scale-[1.03]
+                  transition
+                "
+              >
+                Explore Collections
+              </a>
+
+              <Link
+                href="/trust/winner-selection"
+                className="
+                  px-8 py-4
+                  rounded-xl
+                  border border-white/30
+                  text-white font-medium
+                  hover:bg-white/10
+                  transition
+                "
+              >
+                How the lottery works
+              </Link>
+            </div>
+
+            <div className="mt-4 md:mt-6 text-sm text-white/70">
+              🎓 Transparent • Student-powered • Real rewards
+            </div>
+          </motion.div>
+        </div>
+      </div>
+      {/* ================================================= */}
+
+      <div id="collections" className="max-w-6xl mx-auto px-5 py-14">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-10"
         >
-          <h1 className="text-3xl font-bold">Collections</h1>
+          <h2 className="text-3xl font-bold">Collections</h2>
           <p className="text-secondary mt-2 max-w-2xl">
-            Support student dreams by purchasing digital collectibles.  
-            Each collection is limited and may reward one student when sold out.
+            Support student dreams through art, community, and opportunity.
+            Each collection is limited and may reward one supporter when sold out.
           </p>
         </motion.div>
 
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-amber-300">
+          <h3 className="text-xl font-semibold text-amber-300">
             Active & Completed Collections
-          </h2>
+          </h3>
           <Link
             href="/trust/winner-selection"
             className="text-sm text-white/80 hover:text-white underline"
@@ -82,9 +181,16 @@ export default function Collections() {
                   key={c.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-5 flex flex-col justify-between"
+                  className="
+                    rounded-2xl
+                    border border-white/10
+                    bg-white/5 backdrop-blur
+                    p-5
+                    flex flex-col justify-between
+                    hover:scale-[1.02]
+                    transition
+                  "
                 >
-                  {/* Header */}
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-lg font-bold">{c.title}</h3>
                     <span
@@ -104,7 +210,6 @@ export default function Collections() {
                     </p>
                   )}
 
-                  {/* Progress */}
                   <div className="mb-4">
                     <div className="flex justify-between text-xs text-white/70">
                       <span>{sold} / {total} sold</span>
@@ -123,12 +228,11 @@ export default function Collections() {
                     )}
                   </div>
 
-                  {/* Action */}
                   <Link
                     href={`/collections/${c.id}`}
                     className="button-primary text-center py-2 rounded-lg mt-auto"
                   >
-                    View collection
+                    View & Support
                   </Link>
                 </motion.div>
               );
