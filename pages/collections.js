@@ -40,7 +40,7 @@ export default function Collections() {
     <div className="min-h-screen">
 
       {/* ================= FULL HERO ================= */}
-      <div className="relative w-full h-[85vh] md:h-[85vh] overflow-hidden">
+      <div className="relative w-full h-[85vh] overflow-hidden">
 
         {/* FULL IMAGE BACKGROUND */}
         <img
@@ -49,87 +49,43 @@ export default function Collections() {
           className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* GRADIENT OVERLAY (STRONGER ON MOBILE) */}
-        <div className="
-          absolute inset-0
-          bg-gradient-to-t md:bg-gradient-to-r
-          from-purple-900/95 via-indigo-900/80 to-purple-700/60
-        " />
+        {/* GRADIENT OVERLAY */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 via-indigo-900/75 to-purple-700/60" />
 
         {/* HERO CONTENT */}
-        <div className="
-          relative z-10
-          max-w-7xl mx-auto px-6
-          h-full
-          flex
-          items-end md:items-center
-        ">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 h-full flex items-center">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="
-              w-full md:max-w-2xl
-              pb-10 md:pb-0
-              text-center md:text-left
-            "
+            className="max-w-2xl"
           >
-            <h1 className="
-              text-4xl md:text-6xl
-              font-extrabold
-              text-white
-              leading-tight
-            ">
-              Support Students <br className="hidden md:block" />
-              Through Art
+            <h1 className="text-5xl md:text-6xl font-extrabold text-white leading-tight">
+              Support Students <br /> Through Art
             </h1>
 
-            <p className="
-              mt-4 md:mt-6
-              text-base md:text-xl
-              text-white/85
-            ">
+            <p className="mt-6 text-lg md:text-xl text-white/85">
               Every collection supports a student, rewards supporters with
               unique digital art, and gives one person a chance to win when the
               collection sells out.
             </p>
 
-            <div className="
-              mt-6 md:mt-8
-              flex flex-col md:flex-row
-              gap-4
-              justify-center md:justify-start
-            ">
+            <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <a
                 href="#collections"
-                className="
-                  px-8 py-4
-                  rounded-xl
-                  bg-gradient-to-r from-blue-500 to-indigo-500
-                  text-white font-semibold
-                  shadow-xl
-                  hover:scale-[1.03]
-                  transition
-                "
+                className="px-8 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-xl hover:scale-[1.03] transition"
               >
                 Explore Collections
               </a>
 
               <Link
                 href="/trust/winner-selection"
-                className="
-                  px-8 py-4
-                  rounded-xl
-                  border border-white/30
-                  text-white font-medium
-                  hover:bg-white/10
-                  transition
-                "
+                className="px-8 py-4 rounded-xl border border-white/30 text-white font-medium hover:bg-white/10 transition"
               >
                 How the lottery works
               </Link>
             </div>
 
-            <div className="mt-4 md:mt-6 text-sm text-white/70">
+            <div className="mt-6 text-sm text-white/70">
               🎓 Transparent • Student-powered • Real rewards
             </div>
           </motion.div>
@@ -181,15 +137,7 @@ export default function Collections() {
                   key={c.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="
-                    rounded-2xl
-                    border border-white/10
-                    bg-white/5 backdrop-blur
-                    p-5
-                    flex flex-col justify-between
-                    hover:scale-[1.02]
-                    transition
-                  "
+                  className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-5 flex flex-col justify-between hover:scale-[1.02] transition"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-lg font-bold">{c.title}</h3>
