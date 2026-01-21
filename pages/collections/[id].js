@@ -176,7 +176,7 @@ export default function CollectionDetail() {
             )}
 
             <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[5, 8, 10, 15].map((amt) => (
+              {[1, 2, 3, 5].map((amt) => (
                 <button
                   key={amt}
                   disabled={busy || isSoldOut || isAmbassador}
