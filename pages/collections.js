@@ -6,9 +6,16 @@ import { motion } from "framer-motion";
 export default function Collections() {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const loadCollections = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      setIsLoggedIn(!!session);
+
       const { data, error } = await supabase
         .from("collections")
         .select("*, items(is_sold)")
@@ -38,21 +45,16 @@ export default function Collections() {
 
   return (
     <div className="min-h-screen">
-
       {/* ================= FULL HERO ================= */}
       <div className="relative w-full h-[85vh] overflow-hidden">
-
-        {/* FULL IMAGE BACKGROUND */}
         <img
           src="/images/hero/ambassador-hero.png"
           alt="BearTask Ambassador"
           className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* GRADIENT OVERLAY */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 via-indigo-900/75 to-purple-700/60" />
 
-        {/* HERO CONTENT */}
         <div className="relative z-10 max-w-7xl mx-auto px-6 h-full flex items-center">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -123,8 +125,27 @@ export default function Collections() {
             Loading collections…
           </div>
         ) : collections.length === 0 ? (
-          <div className="text-center py-16 text-white/60">
-            No collections available right now.
+          <div className="text-center py-16 text-white/70">
+            {!isLoggedIn ? (
+              <>
+                <p className="mb-3 text-lg font-semibold">
+                  Please sign in to view available collections
+                </p>
+                <p className="text-sm text-white/50 mb-6">
+                  Active student collections are available once you’re connected.
+                </p>
+
+                {/* ✅ ADDED LOGIN BUTTON */}
+                <Link
+                  href="/login"
+                  className="inline-block px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg hover:scale-[1.03] transition"
+                >
+                  Sign in to continue
+                </Link>
+              </>
+            ) : (
+              <p>No collections available right now.</p>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -160,7 +181,9 @@ export default function Collections() {
 
                   <div className="mb-4">
                     <div className="flex justify-between text-xs text-white/70">
-                      <span>{sold} / {total} sold</span>
+                      <span>
+                        {sold} / {total} sold
+                      </span>
                       <span>{pct}%</span>
                     </div>
                     <div className="h-2 mt-2 bg-white/10 rounded-full overflow-hidden">
