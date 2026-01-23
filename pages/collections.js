@@ -140,7 +140,7 @@ export default function Collections() {
                   href="/login"
                   className="inline-block px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg hover:scale-[1.03] transition"
                 >
-                  Sign in to continue
+                  Pleas Sign in to continue
                 </Link>
               </>
             ) : (
