@@ -11,15 +11,16 @@ export default function Home() {
       {/* ================= HERO ================= */}
       <section className="px-6 pt-24 pb-16 text-center">
         <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight max-w-3xl mx-auto">
-          Support students.  
+          Join the vibe.  
           <span className="block text-amber-400 mt-2">
-            Receive digital art.
+            Unlock something fun.
           </span>
         </h1>
 
         <p className="mt-5 text-white/80 max-w-xl mx-auto text-base sm:text-lg">
-          BearTask lets you support students, receive a unique digital artwork,
-          and get a chance to win when a collection sells out.
+          BearTask is a student-powered community where digital art unlocks
+          fun challenges, inside jokes, and shared moments on campus.
+          No pressure; just vibes.
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
@@ -27,7 +28,7 @@ export default function Home() {
             href="/collections"
             className="bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold px-8 py-4 rounded-2xl transition"
           >
-            Explore Collections
+            Explore the drops
           </Link>
         </div>
       </section>
@@ -58,23 +59,26 @@ export default function Home() {
 
         <div className="max-w-5xl mx-auto grid gap-8 sm:grid-cols-3">
           <div className="bg-white/10 border border-white/20 rounded-2xl p-8">
-            <h3 className="text-lg font-semibold mb-3">1. Support</h3>
+            <h3 className="text-lg font-semibold mb-3">1. Join In</h3>
             <p className="text-white/70 text-sm">
-              Choose a collection and support it with the amount you want.
+              Pick a drop you like and jump in. It’s less about buying
+              and more about being part of the moment.
             </p>
           </div>
 
           <div className="bg-white/10 border border-white/20 rounded-2xl p-8">
-            <h3 className="text-lg font-semibold mb-3">2. Receive Art</h3>
+            <h3 className="text-lg font-semibold mb-3">2. Unlock a BearTask</h3>
             <p className="text-white/70 text-sm">
-              Get a unique digital artwork that represents your support.
+              Each drop unlocks a fun, optional challenge —
+              something students actually want to do.
             </p>
           </div>
 
           <div className="bg-white/10 border border-white/20 rounded-2xl p-8">
-            <h3 className="text-lg font-semibold mb-3">3. Win Together</h3>
+            <h3 className="text-lg font-semibold mb-3">3. Share the Moment</h3>
             <p className="text-white/70 text-sm">
-              When a collection sells out, one student supporter wins the lottery.
+              Post it, laugh about it, or keep it to yourself.
+              The community lives beyond the app.
             </p>
           </div>
         </div>

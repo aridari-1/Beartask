@@ -49,7 +49,7 @@ export default function Collections() {
       <div className="relative w-full h-[85vh] overflow-hidden">
         <img
           src="/images/hero/ambassador-hero.png"
-          alt="BearTask Ambassador"
+          alt="BearTask Community"
           className="absolute inset-0 w-full h-full object-cover"
         />
 
@@ -62,13 +62,13 @@ export default function Collections() {
             className="max-w-2xl"
           >
             <h1 className="text-5xl md:text-6xl font-extrabold text-white leading-tight">
-              Support Students <br /> Through Art
+              Join the Campus Vibe <br /> Through Art
             </h1>
 
             <p className="mt-6 text-lg md:text-xl text-white/85">
-              Every collection supports a student, rewards supporters with
-              unique digital art, and gives one person a chance to win when the
-              collection sells out.
+              Each collection is a shared campus moment.  
+              Collect digital art, unlock fun BearTasks, and be part of something
+              students actually enjoy.
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -76,24 +76,24 @@ export default function Collections() {
                 href="#collections"
                 className="px-8 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-xl hover:scale-[1.03] transition"
               >
-                Explore Collections
+                Explore the drops
               </a>
 
               <Link
                 href="/trust/winner-selection"
                 className="px-8 py-4 rounded-xl border border-white/30 text-white font-medium hover:bg-white/10 transition"
               >
-                How the lottery works
+                How the experience works
               </Link>
             </div>
 
             <div className="mt-6 text-sm text-white/70">
-              🎓 Transparent • Student-powered • Real rewards
+              🐻 Fun-first • Community-powered • No pressure
             </div>
           </motion.div>
         </div>
       </div>
-      {/* ================================================= */}
+      {/* ================================================= */} 
 
       <div id="collections" className="max-w-6xl mx-auto px-5 py-14">
         <motion.div
@@ -103,20 +103,20 @@ export default function Collections() {
         >
           <h2 className="text-3xl font-bold">Collections</h2>
           <p className="text-secondary mt-2 max-w-2xl">
-            Support student dreams through art, community, and opportunity.
-            Each collection is limited and may reward one supporter when sold out.
+            Each collection is limited, playful, and made for students.
+            Collect art, unlock a fun BearTask, and join the community vibe.
           </p>
         </motion.div>
 
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-amber-300">
-            Active & Completed Collections
+            Active & Past Drops
           </h3>
           <Link
             href="/trust/winner-selection"
             className="text-sm text-white/80 hover:text-white underline"
           >
-            How the winner is selected
+            How the experience works
           </Link>
         </div>
 
@@ -129,22 +129,21 @@ export default function Collections() {
             {!isLoggedIn ? (
               <>
                 <p className="mb-3 text-lg font-semibold">
-                  Please sign in to view available collections
+                  Sign in to see what’s dropping on campus
                 </p>
                 <p className="text-sm text-white/50 mb-6">
-                  Active student collections are available once you’re connected.
+                  New drops appear once you’re connected.
                 </p>
 
-                {/* ✅ ADDED LOGIN BUTTON */}
                 <Link
                   href="/login"
                   className="inline-block px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg hover:scale-[1.03] transition"
                 >
-                  Pleas Sign in to continue
+                  Sign in to continue
                 </Link>
               </>
             ) : (
-              <p>No collections available right now.</p>
+              <p>No drops available right now.</p>
             )}
           </div>
         ) : (
@@ -169,7 +168,7 @@ export default function Collections() {
                           : "bg-blue-500/20 text-blue-300"
                       }`}
                     >
-                      {c.status === "sold_out" ? "Sold out" : "Active"}
+                      {c.status === "sold_out" ? "Ended" : "Live"}
                     </span>
                   </div>
 
@@ -182,7 +181,7 @@ export default function Collections() {
                   <div className="mb-4">
                     <div className="flex justify-between text-xs text-white/70">
                       <span>
-                        {sold} / {total} sold
+                        {sold} / {total} collected
                       </span>
                       <span>{pct}%</span>
                     </div>
@@ -203,7 +202,7 @@ export default function Collections() {
                     href={`/collections/${c.id}`}
                     className="button-primary text-center py-2 rounded-lg mt-auto"
                   >
-                    View & Support
+                    View the drop
                   </Link>
                 </motion.div>
               );

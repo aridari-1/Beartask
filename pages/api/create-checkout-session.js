@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     const { supportAmount, collectionId } = req.body || {};
     const amount = Number(supportAmount);
 
-    if (![5, 8, 10, 15].includes(amount)) {
+    if (![1, 2, 3, 5].includes(amount)) {
       return res.status(400).json({ error: "Invalid support amount" });
     }
 
@@ -77,13 +77,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Collection sold out" });
     }
 
-    // 🛑 Prevent duplicate pending purchases
+    // 🛑 Prevent duplicate pending purchases (ONLY LAST 1 MINUTE)
+    const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000).toISOString();
+
     const { data: existingPending } = await supabaseAdmin
       .from("purchases")
       .select("id")
       .eq("user_id", user.id)
       .eq("item_id", item.id)
       .eq("status", "pending")
+      .gte("created_at", oneMinuteAgo)
       .maybeSingle();
 
     if (existingPending) {

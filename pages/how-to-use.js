@@ -12,23 +12,23 @@ export default function HowToUse() {
   const slides = [
     {
       title: "Welcome to BearTask 🐻",
-      text: "BearTask connects college students with people who want to support them by purchasing digital collectibles.",
-      icon: "🤝",
+      text: "BearTask is a community platform where digital art unlocks fun moments, inside jokes, and shared experiences.",
+      icon: "🎉",
     },
     {
-      title: "How It Works 🔁",
-      text: "Each collection supports students. When you support a collection, you receive a unique digital item.",
-      icon: "🎨",
+      title: "Join the Vibe 🎨",
+      text: "Explore limited drops made for students. Each one is a small moment you can collect and be part of.",
+      icon: "🖼️",
     },
     {
-      title: "Direct Support 💛",
-      text: "Your support helps students financially. Digital items may be collectible or resellable in the future.",
-      icon: "💼",
+      title: "Unlock a BearTask 🎯",
+      text: "Buying one NFT unlocks a fun, optional challenge. No pressure — just something cool you might want to try.",
+      icon: "🔥",
     },
     {
-      title: "Fair Use ⭐",
-      text: "Please use BearTask respectfully. Each collection exists to support students.",
-      icon: "⭐",
+      title: "Share (If You Want) 🤝",
+      text: " BearTasks are more than welcome in the community, but it’s always your choice. Fun comes first.",
+      icon: "🐻",
     },
   ];
 
@@ -92,7 +92,7 @@ export default function HowToUse() {
                 <ArrowLeft size={16} /> Back
               </button>
             ) : (
-              <div></div>
+              <div />
             )}
 
             {step < slides.length - 1 ? (
@@ -107,7 +107,7 @@ export default function HowToUse() {
                 onClick={handleFinish}
                 className="flex items-center justify-center w-full bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold py-2 rounded-lg transition"
               >
-                Start Using BearTask →
+                Let’s go 🐻
               </button>
             )}
           </div>

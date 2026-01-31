@@ -12,44 +12,40 @@ export default function About() {
         <h1 className="text-4xl font-bold mb-4">About BearTask 🐻</h1>
 
         <p className="text-white/90 mb-8 leading-relaxed">
-          <strong>BearTask</strong> is a student-powered support platform that
-          connects the public with verified college students through curated
-          digital collections. By supporting these collections, individuals
-          help students financially while receiving meaningful digital items in
-          return.
+          <strong>BearTask</strong> is a campus-first community where digital art
+          unlocks fun challenges, shared moments, and inside jokes.
+          It’s less about buying, but more about being part of something.
         </p>
 
         <h2 className="text-2xl font-semibold mb-3 text-amber-300">
           🎯 Our Mission
         </h2>
         <p className="text-white/90 mb-8 leading-relaxed">
-          To empower college students financially by creating ethical,
-          transparent ways for communities to support them through digital
-          products and shared opportunities.
+          To create a fun, fair, and student-powered space where creativity,
+          community, and campus culture come together.
         </p>
 
         <h2 className="text-2xl font-semibold mb-3 text-amber-300">
           🌱 Our Vision
         </h2>
         <p className="text-white/90 mb-8 leading-relaxed">
-          We envision a future where students are supported beyond traditional
-          jobs — through creativity, community engagement, and responsible
-          digital ownership.
+          A future where students connect through shared experiences,
+          not pressure, hype, or speculation.
         </p>
 
         <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          💬 Our Commitment
+          💬 What We Stand For
         </h2>
         <ul className="text-left list-disc list-inside text-white/90 mb-10 space-y-2">
-          <li>Verified student ambassadors and contributors.</li>
-          <li>Transparent collection structures and clear participation rules.</li>
-          <li>No misleading promises or hidden conditions.</li>
-          <li>Respectful, ethical use of digital products.</li>
+          <li> students and verified participants.</li>
+          <li>Clear rules and transparent systems.</li>
+          <li>Fun first; always optional.</li>
+          <li>Respectful, community-driven interaction.</li>
         </ul>
 
         <p className="text-white/80 mb-6">
-          BearTask is about trust, creativity, and collective support — not
-          speculation or financial guarantees.
+          BearTask is about moments, memories, and campus energy —
+          not promises or guarantees.
         </p>
 
         <Link

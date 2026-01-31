@@ -1,58 +1,45 @@
-import { useRouter } from "next/router";
 import { useEffect } from "react";
+import { useRouter } from "next/router";
 
-/**
- * ⚠️ IMPORTANT SECURITY NOTE
- * This page MUST remain read-only.
- * - It does NOT confirm payment
- * - It does NOT mint NFTs
- * - It does NOT update Supabase
- *
- * Payment confirmation is handled ONLY by Stripe Webhooks.
- */
-export default function Success() {
+export default function SuccessRedirect() {
   const router = useRouter();
   const { purchase_id } = router.query;
 
   useEffect(() => {
-    // Optional: clean URL, but do NOTHING else
-    if (purchase_id) {
-      // We deliberately DO NOT trust purchase_id
-      // and DO NOT trigger any side effects here.
-      console.log("Stripe redirect received for purchase:", purchase_id);
-    }
+    if (!purchase_id) return;
+
+    // Small delay for Stripe webhook to finalize DB writes
+    const t = setTimeout(() => {
+      router.replace(`/success/${purchase_id}`);
+    }, 1200);
+
+    return () => clearTimeout(t);
   }, [purchase_id]);
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #6d28d9, #4338ca)",
-        color: "white",
-        textAlign: "center",
-        padding: "24px",
-      }}
-    >
-      <h1 style={{ fontSize: "1.8rem", fontWeight: "bold" }}>
-        Finalizing your purchase…
-      </h1>
-
-      <p style={{ marginTop: "12px", maxWidth: "420px", opacity: 0.9 }}>
-        Your payment is being securely verified by Stripe.
-        <br />
-        <strong>
-          Your NFT and lottery entry will appear automatically once payment is
-          confirmed.
-        </strong>
-      </p>
-
-      <p style={{ marginTop: "20px", fontSize: "0.9rem", opacity: 0.75 }}>
-        You can safely close this page.
-      </p>
+    <div style={styles.page}>
+      <div style={styles.card}>
+        <h2>You’re in 🐻</h2>
+        <p>Finalizing your NFT and unlocking your BearTask…</p>
+      </div>
     </div>
   );
 }
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background: "linear-gradient(135deg, #0f172a, #1e293b)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#fff",
+  },
+  card: {
+    background: "#020617",
+    padding: 24,
+    borderRadius: 12,
+    textAlign: "center",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
+  },
+};

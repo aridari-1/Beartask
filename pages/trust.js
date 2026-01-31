@@ -14,51 +14,44 @@ export default function Trust() {
         </h1>
 
         <p className="text-white/90 mb-6 text-center">
-          BearTask is built on transparency, fairness, and responsible student
-          support. This page explains how the platform works and what users can
-          expect.
+          BearTask is designed to be simple, fair, and community-first.
+          This page explains how things work. 
         </p>
 
+
         <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          🎓 Verified Students & Ambassadors
+          🧩 Digital Collections
         </h2>
         <p className="text-white/90 mb-6 leading-relaxed">
-          Student contributors and ambassadors are verified using approved
-          academic email addresses.
+          Each collection is a creative, limited digital drop.
+          Collecting is about participation and community —
+          not financial guarantees.
         </p>
 
         <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          🧩 Digital Collections & Support
-        </h2>
-        <p className="text-white/90 mb-6 leading-relaxed">
-          Supporting a collection grants access to a curated digital item while
-          contributing to student financial support initiatives.
-        </p>
-
-        {/* ✅ ADDED: FAIR LOTTERY RULES */}
-        <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          🎟️ Lottery Rules
+          🎟️ Fair Lottery System
         </h2>
         <ul className="list-disc list-inside text-white/90 mb-6 space-y-2">
-          <li>Each student receives <strong>one equal lottery entry per collection</strong>.</li>
-          <li>Purchasing multiple items does not increase winning chances.</li>
-          <li>Lottery winners are selected automatically by a secure system once a collection sells out.</li>
-          <li>Only verified students are eligible for lottery rewards.</li>
+          <li>Each verified student gets <strong>one equal chance</strong>.</li>
+          <li>Collecting multiple items does not increase odds.</li>
+          <li>Winners are selected automatically when a collection ends.</li>
+          <li>Only verified students are eligible.</li>
         </ul>
 
         <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          ⚠️ Important Notice
+          ⚠️ Important Notes
         </h2>
         <ul className="list-disc list-inside text-white/90 mb-6 space-y-2">
-          <li>Supporting a collection does not guarantee financial returns.</li>
-          <li>Digital items are not investments or financial instruments.</li>
+          <li>Collections are not investments.</li>
+          <li>Participation does not guarantee financial returns.</li>
         </ul>
 
         <h2 className="text-2xl font-semibold mb-3 text-amber-300">
           🤝 Community Standards
         </h2>
         <p className="text-white/90 mb-6 leading-relaxed">
-          Participation must remain respectful, and appropriate.
+          BearTask is about respect, creativity, and good vibes.
+          We expect everyone to treat the community the same way.
         </p>
 
         <div className="text-center">
@@ -66,7 +59,7 @@ export default function Trust() {
             href="/about"
             className="bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold px-6 py-2 rounded-lg transition"
           >
-            Learn About BearTask →
+            Learn More About BearTask →
           </Link>
         </div>
       </motion.div>

@@ -23,6 +23,28 @@ export default async function handler(req, res) {
   }
 
   try {
+    /* ------------------------------------------------------------------
+       ✅ NEW: Handle cancelled / expired / failed checkouts
+       ------------------------------------------------------------------ */
+    if (
+      event.type === "checkout.session.expired" ||
+      event.type === "payment_intent.payment_failed"
+    ) {
+      const session = event.data.object;
+
+      if (session?.id) {
+        await supabaseAdmin
+          .from("purchases")
+          .update({ status: "cancelled" })
+          .eq("stripe_session_id", session.id);
+      }
+
+      return res.status(200).json({ received: true });
+    }
+
+    /* ------------------------------------------------------------------
+       EXISTING LOGIC — UNTOUCHED
+       ------------------------------------------------------------------ */
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
@@ -41,7 +63,7 @@ export default async function handler(req, res) {
         !userId ||
         !itemId ||
         !collectionId ||
-        ![5, 8, 10, 15].includes(supportAmount)
+        ![1, 2, 3, 5].includes(supportAmount)
       ) {
         console.error("❌ Missing or invalid metadata:", session?.metadata);
         return res.status(200).json({ received: true });
@@ -121,6 +143,29 @@ export default async function handler(req, res) {
         console.error("❌ purchases update error:", updErr.message);
         return res.status(200).json({ received: true });
       }
+// 🎯 Assign a random fun task (if any active)
+const { data: tasks, error: taskErr } = await supabaseAdmin
+  .from("fun_tasks")
+  .select("id")
+  .eq("is_active", true);
+
+if (taskErr) {
+  console.error("❌ fun_tasks read error:", taskErr.message);
+} else if (tasks && tasks.length > 0) {
+  const randomTask = tasks[Math.floor(Math.random() * tasks.length)];
+
+  const { error: taskUpdateErr } = await supabaseAdmin
+    .from("purchases")
+    .update({ fun_task_id: randomTask.id })
+    .eq("stripe_session_id", session.id);
+
+  if (taskUpdateErr) {
+    console.error(
+      "❌ fun_task assignment error:",
+      taskUpdateErr.message
+    );
+  }
+}
 
       // 🔄 Recalculate cagnotte_total (source of truth)
       const { data: paidRows, error: sumErr } = await supabaseAdmin
