@@ -1,20 +1,36 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 
 export default function SuccessRedirect() {
   const router = useRouter();
   const { purchase_id } = router.query;
+  const attemptsRef = useRef(0);
 
   useEffect(() => {
     if (!purchase_id) return;
 
-    // Small delay for Stripe webhook to finalize DB writes
-    const t = setTimeout(() => {
-      router.replace(`/success/${purchase_id}`);
-    }, 1200);
+    let cancelled = false;
 
-    return () => clearTimeout(t);
-  }, [purchase_id]);
+    const tryRedirect = () => {
+      if (cancelled) return;
+
+      attemptsRef.current += 1;
+
+      router.replace(`/success/${purchase_id}`);
+
+      // Retry a few times in case webhook is still processing
+      if (attemptsRef.current < 5) {
+        setTimeout(tryRedirect, 1200);
+      }
+    };
+
+    const t = setTimeout(tryRedirect, 1200);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [purchase_id, router]);
 
   return (
     <div style={styles.page}>
