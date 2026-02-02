@@ -53,19 +53,23 @@ export default function MyNFTs() {
         },
       }));
 
-      /* ---------------- Purchased NFTs ---------------- */
+      /* ---------------- Purchased NFTs (FIXED) ---------------- */
 
       const { data: purchases, error: purchaseError } = await supabase
         .from("purchases")
         .select(`
           id,
           created_at,
-          nft_url,
+          items (
+            title,
+            media_url
+          ),
           collections (
             title
           )
         `)
         .eq("user_id", user.id)
+        .eq("status", "paid")
         .order("created_at", { ascending: false });
 
       if (purchaseError) {
@@ -76,8 +80,8 @@ export default function MyNFTs() {
         id: `purchase-${p.id}`,
         created_at: p.created_at,
         items: {
-          title: p.collections?.title || "NFT",
-          media_url: p.nft_url,
+          title: p.items?.title || "NFT",
+          media_url: p.items?.media_url,
         },
         collections: {
           title: p.collections?.title || "Collection",
@@ -113,7 +117,6 @@ export default function MyNFTs() {
             key={nft.id}
             className="relative rounded-2xl bg-white/10 border border-white/20 overflow-hidden"
           >
-            {/* 🔑 IMAGE LAYER — MUST BE ABOVE OVERLAY */}
             <div className="relative z-10 h-56 w-full overflow-hidden">
               <img
                 src={nft.items.media_url}
@@ -122,7 +125,6 @@ export default function MyNFTs() {
               />
             </div>
 
-            {/* CONTENT */}
             <div className="p-4">
               <h2 className="text-lg font-semibold">
                 {nft.items.title}

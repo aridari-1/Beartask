@@ -8,9 +8,12 @@ export default function PurchaseSuccessPage() {
 
   const [loading, setLoading] = useState(true);
   const [purchase, setPurchase] = useState(null);
+  const [attempts, setAttempts] = useState(0);
 
   useEffect(() => {
     if (!id) return;
+
+    let cancelled = false;
 
     const fetchPurchase = async () => {
       const { data, error } = await supabase
@@ -30,19 +33,30 @@ export default function PurchaseSuccessPage() {
           )
         `)
         .eq("id", id)
-        .single();
+        .limit(1);
 
-      if (error) {
-        console.error("Purchase fetch error:", error);
-      } else {
-        setPurchase(data);
+      if (!cancelled) {
+        if (data && data.length > 0) {
+          setPurchase(data[0]);
+          setLoading(false);
+        } else {
+          // Retry a few times to allow webhook + RLS to settle
+          if (attempts < 5) {
+            setAttempts((a) => a + 1);
+            setTimeout(fetchPurchase, 1200);
+          } else {
+            setLoading(false);
+          }
+        }
       }
-
-      setLoading(false);
     };
 
     fetchPurchase();
-  }, [id]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, attempts]);
 
   if (loading) {
     return (
@@ -85,18 +99,16 @@ export default function PurchaseSuccessPage() {
             <p style={styles.taskDesc}>{purchase.fun_tasks.description}</p>
           </div>
         )}
+
         <a
-  href="https://discord.gg/J2JfGuV56a"
-  target="_blank"
-  rel="noopener noreferrer"
-  style={styles.discordBtn}
->
- 🐻 Want to show it off?
-Post your BearTask in our Discord and see what others did  🚀 
-</a>
-
-
-
+          href="https://discord.gg/J2JfGuV56a"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={styles.discordBtn}
+        >
+          🐻 Want to show it off?  
+          Post your BearTask in our Discord and see what others did 🚀
+        </a>
 
         <div style={styles.buttonRow}>
           <button
@@ -210,7 +222,7 @@ const styles = {
     background: "#000",
     color: "#fff",
   },
-   discordBtn: {
+  discordBtn: {
     display: "inline-block",
     marginTop: 12,
     padding: "10px 16px",
