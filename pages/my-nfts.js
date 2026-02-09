@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function MyNFTs() {
   const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState([]);
+  const [nfts, setNFTs] = useState([]);
+  const [selectedNFT, setSelectedNFT] = useState(null);
 
   useEffect(() => {
     const loadNFTs = async () => {
@@ -18,77 +20,25 @@ export default function MyNFTs() {
         return;
       }
 
-      /* ---------------- Ambassador Gifts ---------------- */
-
-      const { data: gifts, error: giftError } = await supabase
-        .from("ambassador_gifts")
+      const { data, error } = await supabase
+        .from("user_nfts")
         .select(`
           id,
-          received_at,
-          nft_url,
-          gift: ambassador_gift_items (
-            title,
-            nft_url
-          ),
-          collections (
-            title
-          )
-        `)
-        .eq("ambassador_id", user.id)
-        .order("received_at", { ascending: false });
-
-      if (giftError) {
-        console.error("Gift error:", giftError);
-      }
-
-      const normalizedGifts = (gifts || []).map((g) => ({
-        id: `gift-${g.id}`,
-        created_at: g.received_at,
-        items: {
-          title: g.gift?.title || "Legendary Ambassador NFT",
-          media_url: g.gift?.nft_url || g.nft_url,
-        },
-        collections: {
-          title: g.collections?.title || "Ambassador Reward",
-        },
-      }));
-
-      /* ---------------- Purchased NFTs (FIXED) ---------------- */
-
-      const { data: purchases, error: purchaseError } = await supabase
-        .from("purchases")
-        .select(`
-          id,
-          created_at,
-          items (
-            title,
-            media_url
-          ),
-          collections (
-            title
-          )
+          nft_type,
+          title,
+          image_url,
+          created_at
         `)
         .eq("user_id", user.id)
-        .eq("status", "paid")
         .order("created_at", { ascending: false });
 
-      if (purchaseError) {
-        console.error("Purchase error:", purchaseError);
+      if (error) {
+        console.error("Error loading NFTs:", error);
+        setLoading(false);
+        return;
       }
 
-      const normalizedPurchases = (purchases || []).map((p) => ({
-        id: `purchase-${p.id}`,
-        created_at: p.created_at,
-        items: {
-          title: p.items?.title || "NFT",
-          media_url: p.items?.media_url,
-        },
-        collections: {
-          title: p.collections?.title || "Collection",
-        },
-      }));
-
-      setItems([...normalizedGifts, ...normalizedPurchases]);
+      setNFTs(data || []);
       setLoading(false);
     };
 
@@ -97,49 +47,105 @@ export default function MyNFTs() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        Loading NFTs…
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        Loading your collection…
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-700 to-indigo-700 p-6 text-white">
-      <h1 className="text-3xl font-bold mb-6">My NFTs</h1>
+    <div className="min-h-screen bg-gradient-to-br from-[#0B1224] via-[#111827] to-[#020617] p-6 text-white">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-semibold mb-8">My NFTs</h1>
 
-      {items.length === 0 && (
-        <p className="text-white/70">You don’t own any NFTs yet.</p>
-      )}
+        {nfts.length === 0 && (
+          <p className="text-white/60">
+            You haven’t collected any NFTs yet.
+          </p>
+        )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {items.map((nft) => (
-          <div
-            key={nft.id}
-            className="relative rounded-2xl bg-white/10 border border-white/20 overflow-hidden"
-          >
-            <div className="relative z-10 h-56 w-full overflow-hidden">
-              <img
-                src={nft.items.media_url}
-                alt={nft.items.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
+        {/* NFT GRID */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+          {nfts.map((nft) => (
+            <motion.div
+              key={nft.id}
+              whileHover={{ y: -4 }}
+              className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden cursor-pointer"
+              onClick={() => setSelectedNFT(nft)}
+            >
+              <div className="aspect-square overflow-hidden">
+                <img
+                  src={nft.image_url}
+                  alt={nft.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
-            <div className="p-4">
-              <h2 className="text-lg font-semibold">
-                {nft.items.title}
-              </h2>
-              <p className="text-sm text-white/70">
-                {nft.collections.title}
-              </p>
-              <p className="text-xs text-white/50 mt-1">
-                Acquired on{" "}
-                {new Date(nft.created_at).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-        ))}
+              <div className="p-3">
+                <h2 className="text-sm font-medium truncate">
+                  {nft.title || "Untitled Artwork"}
+                </h2>
+
+                <p className="text-xs text-white/50 mt-1">
+                  {nft.nft_type === "collectible"
+                    ? "Collect Art"
+                    : nft.nft_type}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
+
+      {/* FULL VIEW MODAL */}
+      <AnimatePresence>
+        {selectedNFT && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center px-4"
+            onClick={() => setSelectedNFT(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="max-w-3xl w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="rounded-2xl overflow-hidden shadow-2xl">
+                <img
+                  src={selectedNFT.image_url}
+                  alt={selectedNFT.title}
+                  className="w-full h-auto object-contain bg-black"
+                />
+              </div>
+
+              <div className="mt-4 text-center">
+                <h2 className="text-lg font-semibold">
+                  {selectedNFT.title || "Untitled Artwork"}
+                </h2>
+
+                <p className="text-sm text-white/60 mt-1">
+                  Collected on{" "}
+                  {new Date(
+                    selectedNFT.created_at
+                  ).toLocaleDateString()}
+                </p>
+
+                <button
+                  onClick={() => setSelectedNFT(null)}
+                  className="mt-4 text-sm text-white/60 hover:text-white"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

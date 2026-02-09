@@ -1,117 +1,104 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Login() {
   const router = useRouter();
-
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [step, setStep] = useState("email"); // email | verify
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
 
-  // STEP 1 — SEND CODE
-  const handleSendCode = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // 🔒 ENFORCE UCA EMAIL ONLY
+    if (!normalizedEmail.endsWith("@cub.uca.edu")) {
+      alert("BearTask is currently only available to UCA students (@cub.uca.edu).");
+      return;
+    }
+
     setLoading(true);
 
-    try {
-      const normalizedEmail = email.trim().toLowerCase();
-      const { error } = await supabase.auth.signInWithOtp({
-        email: normalizedEmail,
-      });
-      if (error) throw error;
+    const { error } = await supabase.auth.signInWithOtp({
+      email: normalizedEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/login`,
+      },
+    });
 
-      // Move to verification step
-      setStep("verify");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to send login code.");
-    } finally {
-      setLoading(false);
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("Check your UCA email for the login code.");
     }
+
+    setLoading(false);
   };
 
-  // STEP 2 — VERIFY CODE
-  const handleVerifyCode = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  useEffect(() => {
+    const handleAuthRedirect = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email: email.trim().toLowerCase(),
-        token: code.trim(),
-        type: "email",
-      });
+      if (!session?.user) return;
 
-      if (error) throw error;
-
-      // ✅ ADD: return to original page (collection + ambassador ref)
+      // 🔁 Return user to intended page if exists
       const returnUrl = localStorage.getItem("beartask_return_url");
-
       if (returnUrl) {
         localStorage.removeItem("beartask_return_url");
-        router.push(returnUrl);
-      } else {
-        // Default fallback
-        router.push("/collections");
+        router.replace(returnUrl);
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      alert("Invalid or expired code.");
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      // 🔍 Check if profile exists
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", session.user.id)
+        .single();
+
+      if (!profile) {
+        router.replace("/create-profile");
+      } else {
+        router.replace("/community");
+      }
+    };
+
+    handleAuthRedirect();
+  }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-700 to-indigo-700 px-4">
-      <form
-        onSubmit={step === "email" ? handleSendCode : handleVerifyCode}
-        className="bg-white/10 border border-white/20 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full text-white"
-      >
-        <h1 className="text-2xl font-bold mb-4 text-center">Sign in</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white p-6">
+      <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-3xl p-8 w-full max-w-md">
+        <h1 className="text-3xl font-bold mb-4 text-center">
+          Sign in to BearTask 🐻
+        </h1>
 
-        <p className="text-sm text-white/80 mb-4 text-center">
-          {step === "email"
-            ? "Enter your email to receive a login code."
-            : "Enter the 6-digit code sent to your email."}
+        <p className="text-white/70 text-center mb-6">
+          UCA students only — use your <strong>@cub.uca.edu</strong> email.
         </p>
 
-        {step === "email" && (
+        <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
-            required
-            placeholder="you@example.com"
+            placeholder="you@cub.uca.edu"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-white/20 placeholder-white/60 focus:outline-none mb-4"
-          />
-        )}
-
-        {step === "verify" && (
-          <input
-            type="text"
             required
-            placeholder="Enter verification code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-white/20 placeholder-white/60 focus:outline-none mb-4 text-center tracking-widest"
+            className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 focus:outline-none focus:border-amber-400"
           />
-        )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-amber-400 hover:bg-amber-500 disabled:opacity-60 text-purple-900 font-semibold py-3 rounded-xl transition"
-        >
-          {loading
-            ? "Please wait..."
-            : step === "email"
-            ? "Send login code"
-            : "Verify & continue"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-amber-400 hover:bg-amber-500 text-purple-900 font-bold py-3 rounded-xl transition disabled:opacity-50"
+          >
+            {loading ? "Sending code..." : "Send login code"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -1,135 +1,113 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabaseClient";
-import Layout from "../components/Layout";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import "../styles/globals.css";
 
-import { SessionContextProvider } from "@supabase/auth-helpers-react";
-
-const publicRoutes = [
-  "/",
-  "/login",
-  "/collections",
-  "/collections/[id]",
-  "/success",
-  "/trust-center",
-];
-
-export default function MyApp({ Component, pageProps }) {
+export default function App({ Component, pageProps }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-
-    const init = async () => {
-      // 🔐 Wait for auth to be ready
+    const handleRouting = async () => {
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      if (!mounted) return;
+      /* ------------------------------------------------------------
+         1️⃣ PUBLIC ROUTES (no auth required)
+         ------------------------------------------------------------ */
+      const publicRoutes = [
+        "/",
+        "/login",
+        "/success",
+      ];
 
-      setAuthReady(true);
-
-      // 🔓 Not logged in
-      if (!session) {
+      if (!user) {
         if (!publicRoutes.includes(router.pathname)) {
-          // ✅ ADD: preserve full return URL (including ambassador ref)
-          if (typeof window !== "undefined") {
-            const fullPath =
-              router.asPath || `${router.pathname}${window.location.search}`;
-            localStorage.setItem("beartask_return_url", fullPath);
-          }
-
-          await router.replace("/login");
+          router.replace("/login");
         }
         setLoading(false);
         return;
       }
 
-      // 🔍 Check profile ONLY after auth is ready
-      const { data: profile, error: profileErr } = await supabase
+      /* ------------------------------------------------------------
+         2️⃣ FETCH PROFILE (membership truth)
+         ------------------------------------------------------------ */
+      const { data: profile } = await supabase
         .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
+        .select("id, has_joined")
+        .eq("id", user.id)
         .maybeSingle();
 
-      if (!mounted) return;
-
-      // ❗ IMPORTANT FIX:
-      // If Supabase cannot read the profile (RLS / transient issue),
-      // do NOT redirect to create-profile.
-      if (profileErr) {
-        console.error("Profile select error:", profileErr.message);
-        setLoading(false);
-        return;
-      }
-
-      // 🚫 Profile truly does not exist → create profile
+      /* ------------------------------------------------------------
+         3️⃣ NO PROFILE YET → CREATE PROFILE
+         ------------------------------------------------------------ */
       if (!profile) {
         if (router.pathname !== "/create-profile") {
-          await router.replace("/create-profile");
+          router.replace("/create-profile");
         }
         setLoading(false);
         return;
       }
 
-      // 📘 Check tutorial
-      const hasSeenHowTo =
-        typeof window !== "undefined" &&
-        localStorage.getItem("beartask_how_to_done");
+      /* ------------------------------------------------------------
+         4️⃣ AUTH / SETUP PAGES GUARD
+         ------------------------------------------------------------ */
+      const setupPages = [
+        "/login",
+        "/create-profile",
+        "/how-to-use",
+      ];
 
-      if (!hasSeenHowTo) {
-        if (router.pathname !== "/how-to-use") {
-          await router.replace("/how-to-use");
+      if (setupPages.includes(router.pathname)) {
+        if (profile.has_joined) {
+          router.replace("/community");
         }
         setLoading(false);
         return;
       }
 
-      // 🚪 Prevent returning to auth/setup pages
+      /* ------------------------------------------------------------
+         5️⃣ PROTECTED COMMUNITY ACCESS
+         ------------------------------------------------------------ */
       if (
-        ["/login", "/create-profile", "/how-to-use"].includes(router.pathname)
+        router.pathname.startsWith("/community") &&
+        !profile.has_joined
       ) {
-        await router.replace("/collections");
+        router.replace("/create-profile");
         setLoading(false);
         return;
       }
+
+      /* ------------------------------------------------------------
+         6️⃣ LEGACY COLLECTIONS (ALLOWED, READ-ONLY)
+         ------------------------------------------------------------ */
+      // /collections and /collections/[id] are intentionally NOT gated
 
       setLoading(false);
     };
 
-    init();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      if (!authReady) return;
-      init();
-    });
-
-    return () => {
-      mounted = false;
-      listener.subscription.unsubscribe();
-    };
-  }, [router.pathname, authReady]);
+    handleRouting();
+  }, [router.pathname]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-700 to-indigo-700 text-white">
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
         Loading…
       </div>
     );
   }
 
+  // Pages where we HIDE navbar/footer (optional)
+  const hideLayout = ["/login"].includes(router.pathname);
+
   return (
-    <SessionContextProvider
-      supabaseClient={supabase}
-      initialSession={pageProps.initialSession}
-    >
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
-    </SessionContextProvider>
+    <>
+      {!hideLayout && <Navbar />}
+      <Component {...pageProps} />
+      {!hideLayout && <Footer />}
+    </>
   );
 }

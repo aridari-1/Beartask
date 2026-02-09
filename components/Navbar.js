@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
   const [userLoaded, setUserLoaded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -17,19 +16,6 @@ export default function Navbar() {
       } = await supabase.auth.getUser();
 
       setUser(user || null);
-
-      if (user) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("is_student, is_ambassador")
-          .eq("id", user.id)
-          .single();
-
-        setProfile(prof || null);
-      } else {
-        setProfile(null);
-      }
-
       setUserLoaded(true);
     };
 
@@ -56,6 +42,7 @@ export default function Navbar() {
       animate={{ opacity: 1, y: 0 }}
     >
       <div className="max-w-6xl mx-auto flex justify-between items-center px-4 py-3">
+        {/* Logo */}
         <Link
           href="/"
           className="flex items-center gap-2 font-bold text-lg tracking-wide"
@@ -64,16 +51,11 @@ export default function Navbar() {
           <span>BearTask</span>
         </Link>
 
+        {/* Desktop Nav */}
         <div className="hidden sm:flex items-center gap-6 text-sm font-medium">
-          <Link href="/collections" className="hover:text-amber-300 transition">
-            Collections
+          <Link href="/community" className="hover:text-amber-300 transition">
+            Community
           </Link>
-
-          {profile?.is_student && profile?.is_ambassador && (
-            <Link href="/ambassador" className="hover:text-amber-300 transition">
-              Ambassador
-            </Link>
-          )}
 
           {!user ? (
             <Link
@@ -99,16 +81,28 @@ export default function Navbar() {
                     exit={{ opacity: 0, y: -8 }}
                     className="absolute right-0 mt-2 w-44 bg-white text-black rounded-xl shadow-lg overflow-hidden text-sm"
                   >
-                    <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100">
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 hover:bg-gray-100"
+                    >
                       Profile
                     </Link>
-                    <Link href="/my-nfts" className="block px-4 py-2 hover:bg-gray-100">
+                    <Link
+                      href="/my-nfts"
+                      className="block px-4 py-2 hover:bg-gray-100"
+                    >
                       My NFTs
                     </Link>
-                    <Link href="/trust" className="block px-4 py-2 hover:bg-gray-100">
+                    <Link
+                      href="/trust"
+                      className="block px-4 py-2 hover:bg-gray-100"
+                    >
                       Trust Center
                     </Link>
-                    <Link href="/about" className="block px-4 py-2 hover:bg-gray-100">
+                    <Link
+                      href="/about"
+                      className="block px-4 py-2 hover:bg-gray-100"
+                    >
                       About
                     </Link>
                     <div className="border-t" />
@@ -125,6 +119,7 @@ export default function Navbar() {
           )}
         </div>
 
+        {/* Mobile Menu Button */}
         <button
           className="sm:hidden text-white/90"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -133,15 +128,16 @@ export default function Navbar() {
         </button>
       </div>
 
+      {/* Mobile Menu */}
       {menuOpen && (
         <div className="sm:hidden bg-white/10 backdrop-blur-md border-t border-white/10 px-4 pb-4 text-sm">
-          <Link href="/collections" className="block py-2">
-            Collections
+          <Link href="/community" className="block py-2">
+            Community
           </Link>
 
-          {profile?.is_student && profile?.is_ambassador && (
-            <Link href="/ambassador" className="block py-2">
-              Ambassador
+          {!user && (
+            <Link href="/login" className="block py-2 font-semibold">
+              Login
             </Link>
           )}
 
@@ -159,16 +155,13 @@ export default function Navbar() {
               <Link href="/about" className="block py-2">
                 About
               </Link>
-              <button onClick={logout} className="block py-2 text-red-400">
+              <button
+                onClick={logout}
+                className="block py-2 text-red-400"
+              >
                 Logout
               </button>
             </>
-          )}
-
-          {!user && (
-            <Link href="/login" className="block py-2 font-semibold">
-              Login
-            </Link>
           )}
         </div>
       )}
