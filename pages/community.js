@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import Link from "next/link";
 import { supabase } from "../lib/supabaseClient";
 import { motion } from "framer-motion";
@@ -7,7 +8,7 @@ const ACTIVITIES = [
   {
     id: "beartask",
     title: "🐻 BearTask",
-    description: "Complete fun, real-life challenges with other students.",
+    description: "Complete fun real-life challenges with other students.",
     tag: "Fun Tasks",
     href: "/activities/beartask",
   },
@@ -36,28 +37,33 @@ const ACTIVITIES = [
   {
     id: "gifts",
     title: "🎁 Gifts",
-    description: "Surprises and rewards just for being part of the community.",
+    description: "Surprises and rewards for being active in the community.",
     tag: "Gifts",
     href: "/activities/gifts",
   },
 ];
 
 export default function Community() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    const loadUser = async () => {
+      const { data } = await supabase.auth.getUser();
       setUser(data?.user || null);
-    });
+    };
+
+    loadUser();
   }, []);
 
   const handleEnter = (href) => {
     if (!user) {
       localStorage.setItem("beartask_return_url", href);
-      window.location.href = "/login";
+      router.push("/login");
       return;
     }
-    window.location.href = href;
+
+    router.push(href);
   };
 
   return (
@@ -72,7 +78,6 @@ export default function Community() {
 
       <div className="relative max-w-6xl mx-auto px-6 py-16">
 
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -84,36 +89,23 @@ export default function Community() {
 
           <p className="text-white/70 max-w-2xl text-lg">
             Trends, digital art, student posts, and smart tools — all in one place.
-            Built for students. Built for fun.
           </p>
-
-          {!user && (
-            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/10 rounded-xl text-sm text-amber-300">
-              👀 You’re browsing as a guest. Sign in to participate.
-            </div>
-          )}
         </motion.div>
 
-        {/* Activities Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
           {ACTIVITIES.map((a, i) => (
             <motion.div
               key={a.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06 }}
-              whileHover={{ y: -8 }}
-              className="group relative rounded-3xl border border-white/10 bg-white/5 backdrop-blur-2xl p-8 overflow-hidden transition-all duration-300"
+              transition={{ delay: i * 0.05 }}
+              whileHover={{ y: -6 }}
+              className="group rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 transition duration-300"
             >
-              {/* Hover glow */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300 bg-gradient-to-br from-white/10 to-transparent" />
-
-              {/* Tag */}
               <span className="text-xs uppercase tracking-wider text-amber-400">
                 {a.tag}
               </span>
 
-              {/* Title */}
               <h3 className="text-2xl font-semibold mt-3 mb-3 flex items-center">
                 {a.title}
                 {a.badge && (
@@ -123,21 +115,35 @@ export default function Community() {
                 )}
               </h3>
 
-              {/* Description */}
-              <p className="text-white/70 text-sm leading-relaxed mb-10">
+              <p className="text-white/70 text-sm mb-8">
                 {a.description}
               </p>
 
-              {/* Button */}
               <button
                 onClick={() => handleEnter(a.href)}
-                className="mt-auto w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-purple-900 font-semibold py-3 rounded-xl transition-all duration-200 shadow-lg"
+                className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-purple-900 font-semibold py-3 rounded-xl transition shadow-lg"
               >
                 Enter Activity
               </button>
             </motion.div>
           ))}
         </div>
+
+        <div className="mt-16 text-center">
+          {!user ? (
+            <Link
+              href="/login"
+              className="bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold px-6 py-3 rounded-xl transition shadow-lg"
+            >
+              Sign in to participate →
+            </Link>
+          ) : (
+            <p className="text-white/60">
+              You’re logged in. Pick an activity and jump in.
+            </p>
+          )}
+        </div>
+
       </div>
     </div>
   );
