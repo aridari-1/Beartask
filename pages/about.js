@@ -38,7 +38,7 @@ export default function About() {
 
           <GlassSection
             title="🌱 Our Vision"
-            text="A university experience where students connect through shared trends, challenges, and creative moments — not pressure or speculation."
+            text="A university experience where students connect through shared trends, challenges, and creative moments  not pressure or speculation."
           />
 
           <GlassSection

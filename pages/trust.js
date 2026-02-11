@@ -34,7 +34,7 @@ export default function Trust() {
           {/* Section */}
           <GlassSection
             title="🧩 Digital Collectibles"
-            text="Collectible art on BearTask represents participation in the community. It unlocks experiences, fun tasks, and moments — not financial promises."
+            text="Collectible art on BearTask represents participation in the community. It unlocks experiences, fun tasks, and moments  not financial promises."
           />
 
           <GlassSection
