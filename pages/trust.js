@@ -3,66 +3,85 @@ import Link from "next/link";
 
 export default function Trust() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex flex-col items-center py-12 px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-3xl bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-8"
-      >
-        <h1 className="text-4xl font-bold mb-4 text-center">
-          BearTask Trust Center
-        </h1>
+    <div className="relative min-h-screen bg-[#070B18] text-white overflow-hidden">
 
-        <p className="text-white/90 mb-6 text-center">
-          BearTask is designed to be simple, fair, and community-first.
-          This page explains how things work. 
-        </p>
+      {/* Glow background */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-purple-600/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 -right-32 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-[400px] h-[400px] bg-amber-400/10 rounded-full blur-3xl" />
+      </div>
 
+      <div className="relative max-w-5xl mx-auto px-6 py-20">
 
-        <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          🧩 Digital Collections
-        </h2>
-        <p className="text-white/90 mb-6 leading-relaxed">
-          Each collection is a creative, limited digital drop.
-          Collecting is about participation and community —
-          not financial guarantees.
-        </p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-14"
+        >
+          <h1 className="text-5xl font-extrabold tracking-tight mb-6">
+            Trust & Transparency
+          </h1>
 
-        <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          🎟️ Fair Lottery System
-        </h2>
-        <ul className="list-disc list-inside text-white/90 mb-6 space-y-2">
-          <li>Each verified student gets <strong>one equal chance</strong>.</li>
-          <li>Collecting multiple items does not increase odds.</li>
-          <li>Winners are selected automatically when a collection ends.</li>
-          <li>Only verified students are eligible.</li>
-        </ul>
+          <p className="text-white/70 text-lg max-w-2xl">
+            BearTask is built for students, with clarity and fairness at its core.
+            Here’s how things work behind the scenes.
+          </p>
+        </motion.div>
 
-        <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          ⚠️ Important Notes
-        </h2>
-        <ul className="list-disc list-inside text-white/90 mb-6 space-y-2">
-          <li>Collections are not investments.</li>
-          <li>Participation does not guarantee financial returns.</li>
-        </ul>
+        <div className="space-y-10">
 
-        <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          🤝 Community Standards
-        </h2>
-        <p className="text-white/90 mb-6 leading-relaxed">
-          BearTask is about respect, creativity, and good vibes.
-          We expect everyone to treat the community the same way.
-        </p>
+          {/* Section */}
+          <GlassSection
+            title="🧩 Digital Collectibles"
+            text="Collectible art on BearTask represents participation in the community. It unlocks experiences, fun tasks, and moments — not financial promises."
+          />
 
-        <div className="text-center">
+          <GlassSection
+            title="💰 Transparent Payments"
+            text="When purchases exist, funds are processed securely through Stripe. Platform fees are handled automatically, and community splits are defined clearly in the system."
+          />
+
+          <GlassSection
+            title="🎯 Fair Participation"
+            text="Every verified student has equal access to activities. No hidden boosts. No secret advantages. Participation is always optional and community-driven."
+          />
+
+          <GlassSection
+            title="⚠️ Important Notes"
+            text="BearTask is not an investment platform. Digital collectibles are for fun, creativity, and community culture only."
+          />
+
+          <GlassSection
+            title="🤝 Community Standards"
+            text="We expect respect, creativity, and good energy. This is a student-first space built on positive campus culture."
+          />
+
+        </div>
+
+        <div className="mt-16 text-center">
           <Link
             href="/about"
-            className="bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold px-6 py-2 rounded-lg transition"
+            className="bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold px-6 py-3 rounded-xl transition shadow-lg"
           >
-            Learn More About BearTask →
+            Learn more about BearTask →
           </Link>
         </div>
-      </motion.div>
+
+      </div>
+    </div>
+  );
+}
+
+function GlassSection({ title, text }) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 hover:bg-white/10 transition duration-300">
+      <h2 className="text-2xl font-semibold text-amber-400 mb-4">
+        {title}
+      </h2>
+      <p className="text-white/75 leading-relaxed">
+        {text}
+      </p>
     </div>
   );
 }

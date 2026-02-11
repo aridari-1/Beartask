@@ -21,16 +21,14 @@ export default function MyNFTs() {
       }
 
       const { data, error } = await supabase
-        .from("user_nfts")
+        .from("collect_art_nfts")
         .select(`
           id,
-          nft_type,
-          title,
           image_url,
-          created_at
+          claimed_at
         `)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .eq("claimed_by", user.id)
+        .order("claimed_at", { ascending: false });
 
       if (error) {
         console.error("Error loading NFTs:", error);
@@ -76,20 +74,18 @@ export default function MyNFTs() {
               <div className="aspect-square overflow-hidden">
                 <img
                   src={nft.image_url}
-                  alt={nft.title}
+                  alt="Collect Art NFT"
                   className="w-full h-full object-cover"
                 />
               </div>
 
               <div className="p-3">
                 <h2 className="text-sm font-medium truncate">
-                  {nft.title || "Untitled Artwork"}
+                  Collect Art NFT
                 </h2>
 
                 <p className="text-xs text-white/50 mt-1">
-                  {nft.nft_type === "collectible"
-                    ? "Collect Art"
-                    : nft.nft_type}
+                  BearTask Collection
                 </p>
               </div>
             </motion.div>
@@ -118,20 +114,20 @@ export default function MyNFTs() {
               <div className="rounded-2xl overflow-hidden shadow-2xl">
                 <img
                   src={selectedNFT.image_url}
-                  alt={selectedNFT.title}
+                  alt="Collect Art NFT"
                   className="w-full h-auto object-contain bg-black"
                 />
               </div>
 
               <div className="mt-4 text-center">
                 <h2 className="text-lg font-semibold">
-                  {selectedNFT.title || "Untitled Artwork"}
+                  Collect Art NFT
                 </h2>
 
                 <p className="text-sm text-white/60 mt-1">
                   Collected on{" "}
                   {new Date(
-                    selectedNFT.created_at
+                    selectedNFT.claimed_at
                   ).toLocaleDateString()}
                 </p>
 

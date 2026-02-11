@@ -33,63 +33,48 @@ export default async function handler(req, res) {
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
-    console.error("❌ Webhook signature verification failed.", err.message);
+    console.error("❌ Stripe webhook signature verification failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  /* =========================================================
-     ✅ PAYMENT COMPLETED
-     ========================================================= */
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const metadata = session.metadata || {};
-    const userId = metadata.user_id;
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
 
-    if (!userId) {
-      console.error("❌ Missing user_id in metadata");
-      return res.status(200).json({ received: true });
-    }
+      const userId = session.metadata?.user_id;
 
-    /* =========================================================
-       🎨 COLLECT ART NFT LOGIC
-       ========================================================= */
-    if (metadata.type === "collect_art") {
-      try {
-        // 1️⃣ Select ONE unclaimed NFT
-        const { data: nft, error: selectError } = await supabaseAdmin
-          .from("collect_art_nfts")
-          .select("id, image_url")
-          .eq("is_claimed", false)
-          .limit(1)
-          .single();
-
-        if (selectError || !nft) {
-          console.error("❌ No unclaimed Collect Art NFTs left");
-          return res.status(200).json({ received: true });
-        }
-
-        // 2️⃣ Claim NFT (atomic safety)
-        const { error: updateError } = await supabaseAdmin
-          .from("collect_art_nfts")
-          .update({
-            is_claimed: true,
-            claimed_by: userId,
-            claimed_at: new Date(),
-          })
-          .eq("id", nft.id)
-          .eq("is_claimed", false);
-
-        if (updateError) {
-          throw updateError;
-        }
-
-        console.log("✅ Collect Art NFT assigned:", nft.id);
-      } catch (err) {
-        console.error("❌ Collect Art assignment failed:", err);
-        return res.status(500).json({ error: "NFT assignment failed" });
+      if (!userId) {
+        console.error("❌ Missing user_id in Stripe metadata");
+        return res.status(200).json({ received: true });
       }
-    }
-  }
 
-  return res.status(200).json({ received: true });
+      /* ======================================================
+         💳 INSERT PAYMENT (SOURCE OF TRUTH)
+         ====================================================== */
+      const { error } = await supabaseAdmin
+        .from("payments")
+        .insert({
+          user_id: userId,
+          stripe_session_id: session.id,
+          stripe_payment_intent: session.payment_intent,
+          amount_cents: session.amount_total,
+          currency: session.currency,
+          status: "paid",
+          paid_at: new Date(),
+        });
+
+      // Stripe retries webhooks → ignore duplicates safely
+      if (error && !error.message.includes("duplicate")) {
+        console.error("❌ Failed to insert payment:", error);
+        throw error;
+      }
+
+      console.log("✅ Payment recorded for user:", userId);
+    }
+
+    return res.status(200).json({ received: true });
+  } catch (err) {
+    console.error("❌ Webhook processing error:", err);
+    return res.status(500).json({ error: "Webhook processing failed" });
+  }
 }

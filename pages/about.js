@@ -3,58 +3,79 @@ import Link from "next/link";
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex flex-col items-center py-12 px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-3xl bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-8 text-center"
-      >
-        <h1 className="text-4xl font-bold mb-4">About BearTask 🐻</h1>
+    <div className="relative min-h-screen bg-[#070B18] text-white overflow-hidden">
 
-        <p className="text-white/90 mb-8 leading-relaxed">
-          <strong>BearTask</strong> is a campus-first community where digital art
-          unlocks fun challenges, shared moments, and inside jokes.
-          It’s less about buying, but more about being part of something.
-        </p>
+      {/* Glow background */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-purple-600/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 -right-32 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-[400px] h-[400px] bg-amber-400/10 rounded-full blur-3xl" />
+      </div>
 
-        <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          🎯 Our Mission
-        </h2>
-        <p className="text-white/90 mb-8 leading-relaxed">
-          To create a fun, fair, and student-powered space where creativity,
-          community, and campus culture come together.
-        </p>
+      <div className="relative max-w-5xl mx-auto px-6 py-20">
 
-        <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          🌱 Our Vision
-        </h2>
-        <p className="text-white/90 mb-8 leading-relaxed">
-          A future where students connect through shared experiences,
-          not pressure, hype, or speculation.
-        </p>
-
-        <h2 className="text-2xl font-semibold mb-3 text-amber-300">
-          💬 What We Stand For
-        </h2>
-        <ul className="text-left list-disc list-inside text-white/90 mb-10 space-y-2">
-          <li> students and verified participants.</li>
-          <li>Clear rules and transparent systems.</li>
-          <li>Fun first; always optional.</li>
-          <li>Respectful, community-driven interaction.</li>
-        </ul>
-
-        <p className="text-white/80 mb-6">
-          BearTask is about moments, memories, and campus energy —
-          not promises or guarantees.
-        </p>
-
-        <Link
-          href="/trust"
-          className="inline-block bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold px-6 py-2 rounded-lg transition"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-14"
         >
-          Visit the Trust Center →
-        </Link>
-      </motion.div>
+          <h1 className="text-5xl font-extrabold tracking-tight mb-6">
+            About BearTask 🐻
+          </h1>
+
+          <p className="text-white/70 text-lg max-w-2xl">
+            BearTask is a campus-first community built around fun,
+            creativity, and student culture.
+          </p>
+        </motion.div>
+
+        <div className="space-y-12">
+
+          <GlassSection
+            title="🎯 Our Mission"
+            text="To create a fun, fair, and student-powered space where creativity, digital art, and campus energy connect."
+          />
+
+          <GlassSection
+            title="🌱 Our Vision"
+            text="A university experience where students connect through shared trends, challenges, and creative moments — not pressure or speculation."
+          />
+
+          <GlassSection
+            title="💡 What Makes BearTask Different"
+            text="We focus on participation, not hype. Community, not competition. Experiences, not promises."
+          />
+
+          <GlassSection
+            title="💬 What We Stand For"
+            text="Respectful interaction. Transparent systems. Optional participation. Student-first design."
+          />
+
+        </div>
+
+        <div className="mt-16 text-center">
+          <Link
+            href="/trust"
+            className="bg-amber-400 hover:bg-amber-500 text-purple-900 font-semibold px-6 py-3 rounded-xl transition shadow-lg"
+          >
+            Visit the Trust Center →
+          </Link>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function GlassSection({ title, text }) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 hover:bg-white/10 transition duration-300">
+      <h2 className="text-2xl font-semibold text-amber-400 mb-4">
+        {title}
+      </h2>
+      <p className="text-white/75 leading-relaxed">
+        {text}
+      </p>
     </div>
   );
 }
